@@ -17,8 +17,8 @@ public class GeneratorManager : MonoBehaviour
         while (true)
         {            
             GameObject obj = PoolingManager.instance.getPool();
-            obj.transform.position = new Vector3(-10, Random.Range(pos[0].position.y,pos[1].position.y), 0);
-            yield return new WaitForSeconds(1f);
+            obj.transform.position = new Vector3(-95, Random.Range(pos[0].position.y,pos[1].position.y), Random.Range(35,53));
+            yield return new WaitForSeconds(0.3f);
         }
     }
 }
