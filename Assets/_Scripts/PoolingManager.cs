@@ -19,7 +19,7 @@ public class PoolingManager : MonoBehaviour
     {
         Rock = new Queue<GameObject>();
 
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < 300; i++)
         {
             GameObject obj = Instantiate(Rock_pref, transform);
             Rock.Enqueue(obj);
