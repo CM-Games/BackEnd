@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using DG.Tweening;
 
 public class RockManager : MonoBehaviour
@@ -11,6 +12,7 @@ public class RockManager : MonoBehaviour
    public int speed;          // 운석 속도
     int rotateSpeed;    // 운석 공전 속도
     int posY;
+  
 
     private void Awake()
     {
@@ -18,28 +20,39 @@ public class RockManager : MonoBehaviour
         speed = Random.Range(5, 50);
         rotateSpeed = speed;
         rotateAround = false;
+      
+
     }
 
     public IEnumerator manage()
-    {       
+    {
+        float timer = 0;
+        int temp = 0;
+
         while (true)
         {
-          if(!rotateAround)  transform.Translate(new Vector3(speed, 0, 0) * Time.deltaTime, Space.World);
+           transform.Translate(new Vector3(speed, 0, 0) * Time.deltaTime, Space.World);
 
-            if(rotateAround)
+            if (rotateAround)
             {
-             //   speed = (int)Mathf.Lerp(rotateSpeed, 0, Time.deltaTime);
-                //transform.position = new Vector3(
-                //    transform.position.x,
-                //    Mathf.Lerp(transform.position.y,posY, Time.deltaTime),
-                //    transform.position.z
-                //    );
+
+                if (timer <= 1)
+                {
+                    speed = (int)Mathf.Lerp(rotateSpeed, rotateSpeed*0.5f, timer);
+                    temp = (int)Mathf.Lerp(0, rotateSpeed, timer);
+                    timer += Time.deltaTime;
+                }
+
                 transform.DOMoveY(posY, 15).SetEase(Ease.Linear);
-                transform.RotateAround(planet.transform.position, Vector3.down, rotateSpeed * Time.deltaTime);
+
+                PlanetManager.instance.applyGravity(transform);
+
+                //transform.RotateAround(planet.transform.position, Vector3.down, temp * 2 * Time.deltaTime);
             }
-
-
-            if (transform.position.x >= 100) callReturnPool();
+            else
+            {
+                if (transform.position.x >= 100 || transform.position.z <= -0.4f || transform.position.z > 100 || transform.position.x < -140) callReturnPool();
+            }
 
             yield return null;
         }       
@@ -58,6 +71,14 @@ public class RockManager : MonoBehaviour
             planet = other.gameObject;
             posY = Random.Range(-5, 5);
             rotateAround = true;
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.CompareTag("planet"))
+        {
+            rotateAround = false;
         }
     }
 }
