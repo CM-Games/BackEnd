@@ -20,8 +20,6 @@ public class RockManager : MonoBehaviour
         speed = Random.Range(5, 50);
         rotateSpeed = speed;
         rotateAround = false;
-      
-
     }
 
     public IEnumerator manage()
@@ -51,7 +49,8 @@ public class RockManager : MonoBehaviour
             }
             else
             {
-                if (transform.position.x >= 100 || transform.position.z <= -0.4f || transform.position.z > 100 || transform.position.x < -140) callReturnPool();
+                if (transform.position.x >= 100 || transform.position.z <= -0.4f || transform.position.z > 100 || transform.position.x < -140
+                    || transform.position.y > 50 || transform.position.y < -50) callReturnPool();
             }
 
             yield return null;
@@ -71,6 +70,20 @@ public class RockManager : MonoBehaviour
             planet = other.gameObject;
             posY = Random.Range(-5, 5);
             rotateAround = true;
+        }
+        
+    }
+
+    private void OnTriggerStay(Collider other)
+    {
+        if (other.CompareTag("planet"))
+        {
+            if (other.name == "planetCollider")
+            {
+                info.rockCount++;
+                UIManager.instance.setRockCount();
+                callReturnPool();
+            }
         }
     }
 
