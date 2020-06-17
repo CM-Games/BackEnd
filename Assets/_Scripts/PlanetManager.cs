@@ -28,15 +28,16 @@ public class PlanetManager : MonoBehaviour
 
     void Init()
     {
-        info.rockCount = 0;
+        info.rockCount = 1000;
         info.gravity = -1f;
         info.radius = 0.8f;
         info.itemUpgradeValue = new int[System.Enum.GetValues(typeof(Item)).Length];
-        info.gravityPrice = 500;
+        info.gravityPrice = 300;
         info.expandPrice = 500;
 
+        UIManager.instance.UIInit();
         UIManager.instance.setRockCount();
-        UIManager.instance.setItemPrice();
+        UIManager.instance.setItemPrice(true);
     }
 
     // 행성 범위 안에들어오면 해당 운석에 해당 행성의 중력을 적용
@@ -50,13 +51,36 @@ public class PlanetManager : MonoBehaviour
         Quaternion targetRotation = Quaternion.FromToRotation(rockUp, gravityUp) * rock.rotation;
     }
 
-    // 아이템 구매시 해당 옵션 재 정의
-    public void setGravity(string name, int value)
+    // 행성 번위 설정
+    void setRadius()
     {
-        if (name == "gravity") info.gravityPrice += value;
-        else if (name == "radius") info.expandPrice += value;
+        GetComponent<SphereCollider>().radius = info.radius;
+    }
+
+    // 아이템 구매시 해당 옵션 재 정의
+    public void setGravity(Item item)
+    {
+        if (item == Item.Gravity && info.rockCount - info.gravityPrice >= 0)
+        {
+            info.rockCount -= info.gravityPrice;
+            info.gravity -= 1;
+            UIManager.instance.setItemPrice();
+            info.gravityPrice += (int)info.gravity * -50;           
+           
+        }
+        else if (item == Item.Expand && info.rockCount - info.expandPrice >= 0)
+        {
+            info.rockCount -= info.expandPrice;
+            info.radius += 0.03f;
+            UIManager.instance.setItemPrice();
+            info.expandPrice += (int)(info.radius * 100);
+            setRadius();
+        }
+        else print("재화 부족");
 
         UIManager.instance.setItemPrice();
+        UIManager.instance.setRockCount();
+        UIManager.instance.setPlanetValue(item);
     }
 }
 
