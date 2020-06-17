@@ -1002,7 +1002,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: X 500
+  m_Text: ' 500'
 --- !u!222 &613507829
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1144,7 +1144,7 @@ GameObject:
   - component: {fileID: 786816916}
   - component: {fileID: 786816915}
   m_Layer: 5
-  m_Name: settingImage
+  m_Name: menuImage
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1801,7 +1801,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: X 500
+  m_Text: ' 500'
 --- !u!222 &1448451255
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1898,7 +1898,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1611213091}
   m_Layer: 5
-  m_Name: setting
+  m_Name: menu
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1969,10 +1969,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   rockCount: {fileID: 543120311}
-  gravityBuyObj: {fileID: 1074976255}
-  grivatyPriceText: {fileID: 613507828}
-  expandPriceText: {fileID: 1448451254}
-  Setting: {fileID: 1611213091}
+  gravityValueText: {fileID: 1423075281}
+  gravityPriceObj: {fileID: 988172765}
+  expandPriceObj: {fileID: 2136577230}
+  MenuObj: {fileID: 1611213091}
 --- !u!1 &1678106270
 GameObject:
   m_ObjectHideFlags: 0
@@ -2273,7 +2273,7 @@ GameObject:
   - component: {fileID: 2132762982}
   - component: {fileID: 2132762981}
   m_Layer: 5
-  m_Name: settingButton
+  m_Name: menuButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

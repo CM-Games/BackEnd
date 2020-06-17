@@ -43,10 +43,7 @@ public class RockManager : MonoBehaviour
 
                 transform.DOMoveY(posY, 15).SetEase(Ease.Linear);
 
-                PlanetManager.instance.applyGravity(transform);
-
-                //transform.RotateAround(planet.transform.position, Vector3.down, temp * 2 * Time.deltaTime);
-            }
+                PlanetManager.instance.applyGravity(transform); }
             else
             {
                 if (transform.position.x >= 100 || transform.position.z <= -0.4f || transform.position.z > 100 || transform.position.x < -140
