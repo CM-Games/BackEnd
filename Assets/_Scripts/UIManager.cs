@@ -17,6 +17,7 @@ public class UIManager : MonoBehaviour
     public Transform gravityPriceObj;     // 중력 구매버튼의 텍스트
     public Transform expandPriceObj;      // 범위 구매버튼의 텍스트
     public Transform MenuObj;             // 메뉴 최상단 오브젝트
+    public Text versionText;              // 버전 표시
     Text gravityPriceText;                // 중력 가격 텍스트
     Text expandPriceText;                 // 범위 가격 텍스트
     Button menuButton;                    // 메뉴 버튼
@@ -30,6 +31,7 @@ public class UIManager : MonoBehaviour
     private void Awake()
     {
         instance = this;
+        versionText.text = "version : " + Application.version;
     }
 
     public void UIInit()

@@ -18,6 +18,9 @@ public class PlanetManager : MonoBehaviour
 {
     public static PlanetManager instance;
 
+    GameObject target;
+    IEnumerator temp;
+
     public enum Item { Gravity, Expand }
 
     private void Awake()
@@ -26,6 +29,7 @@ public class PlanetManager : MonoBehaviour
         Init();
     }
 
+    // 초기화
     void Init()
     {
         info.rockCount = 1000;
@@ -35,9 +39,24 @@ public class PlanetManager : MonoBehaviour
         info.gravityPrice = 300;
         info.expandPrice = 500;
 
+        target = null;
+        temp = updateTouch();
+
         UIManager.instance.UIInit();
         UIManager.instance.setRockCount();
         UIManager.instance.setItemPrice(true);
+
+        StartCoroutine(temp);
+    }
+
+    // 업데이트 대신 작동
+    IEnumerator updateTouch()
+    {
+        while (true)
+        {
+            if (Input.GetMouseButtonDown(0)) getTouchTarget();
+            yield return null;
+        }
     }
 
     // 행성 범위 안에들어오면 해당 운석에 해당 행성의 중력을 적용
@@ -52,35 +71,24 @@ public class PlanetManager : MonoBehaviour
     }
 
     // 행성 번위 설정
-    void setRadius()
+    public void setRadius()
     {
         GetComponent<SphereCollider>().radius = info.radius;
     }
 
-    // 아이템 구매시 해당 옵션 재 정의
-    public void setGravity(Item item)
+    // 현재 터치한 오브젝트가 어떤건지 가져옴
+    public void getTouchTarget()
     {
-        if (item == Item.Gravity && info.rockCount - info.gravityPrice >= 0)
-        {
-            info.rockCount -= info.gravityPrice;
-            info.gravity -= 1;
-            UIManager.instance.setItemPrice();
-            info.gravityPrice += (int)info.gravity * -50;           
-           
-        }
-        else if (item == Item.Expand && info.rockCount - info.expandPrice >= 0)
-        {
-            info.rockCount -= info.expandPrice;
-            info.radius += 0.03f;
-            UIManager.instance.setItemPrice();
-            info.expandPrice += (int)(info.radius * 100);
-            setRadius();
-        }
-        else print("재화 부족");
+      
+        RaycastHit hit;
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        Physics.Raycast(ray, out hit);
 
-        UIManager.instance.setItemPrice();
-        UIManager.instance.setRockCount();
-        UIManager.instance.setPlanetValue(item);
+        if(hit.collider != null)
+        {
+            target = hit.transform.gameObject;
+            print(target);
+        }
     }
 }
 
