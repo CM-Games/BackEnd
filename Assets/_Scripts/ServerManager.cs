@@ -22,6 +22,8 @@ public class ServerManager : MonoBehaviour
     string id = "ccm11441";
     string pw = "cjfals12";
 
+    string serverTime;
+
     void Awake()
     {
         if (!backendInit)
@@ -35,7 +37,7 @@ public class ServerManager : MonoBehaviour
         }
     }
     
-
+    // 서버 초기화
     void HandleBackendCallback()
     {
         if (Backend.IsInitialized)
@@ -53,7 +55,7 @@ public class ServerManager : MonoBehaviour
             //Debug.Log(Backend.Utils.GetGoogleHash());
 
             // 서버시간 획득
-            //Debug.Log(Backend.Utils.GetServerTime());
+            getTime();
         }
         // 실패
         else
@@ -62,13 +64,22 @@ public class ServerManager : MonoBehaviour
         }
     }
 
+    #region 서버 유틸(시간,서버상태, 기타 등등)
+    void getTime()
+    {
+        JsonData data = JsonMapper.ToObject(Backend.Utils.GetServerTime().GetReturnValue());
+        serverTime = data["utcTime"].ToString();
+        print(serverTime);
+    }
+    #endregion
+
+    #region 서버 공지
+    // 뒤끝 서버가 점검 혹은 오류가 있을떄
+    // 긴급하게 임시로 공지를 띄움
     void getTempNoti()
     {
         Backend.Notice.GetTempNotice(callback =>
         {
-            // 이후 처리
-            Debug.Log(callback);
-
             JsonData data = JsonMapper.ToObject(callback);
 
             try
@@ -91,6 +102,8 @@ public class ServerManager : MonoBehaviour
         });
     }
 
+    // 서버에 있는 공지를 받아옴
+    // 이미지는 코루틴을 통해 받아옴
     void getNoti()
     {
         BackendReturnObject bro = Backend.Notice.NoticeList();
@@ -112,6 +125,7 @@ public class ServerManager : MonoBehaviour
         }
     }
 
+    // 공지 이미지를 받아온 뒤 최종적으로 공지 활성화
     IEnumerator WWWImageDown(string url)
     {
         UnityWebRequest wr = new UnityWebRequest(url);
@@ -138,6 +152,14 @@ public class ServerManager : MonoBehaviour
         }
     }
 
+    // 임시 공지 닫기
+    public void offTempNotice() => tempNotice.gameObject.SetActive(false);
+
+    // 공지 닫기
+    public void offNotice() => noticeObj.gameObject.SetActive(false);
+    #endregion
+
+    #region 로그인, 회원가입
     // 뒤끝 로그인 시도
     // 아이디가 없으면 자동으로 회원가입 실행 후 자동 로그인
     public void Login()
@@ -173,10 +195,40 @@ public class ServerManager : MonoBehaviour
                 break;
         }
     }
+    #endregion
 
-    // 임시 공지 닫기
-    public void offTempNotice() => tempNotice.gameObject.SetActive(false);
+    #region 유저 정보 업데이트 및 로드
 
-    // 공지 닫기
-    public void offNotice() => noticeObj.gameObject.SetActive(false);
+    // 유저 정보 최초 테이블 생성
+    public void userInfoInit()
+    {       
+        // 유저 돈
+        Param param = new Param();
+        param.Add("money", 0);
+
+        // 정보 삽입
+        Backend.GameInfo.Insert("character", param).GetReturnValue();
+
+        print("유저 정보 생성 완료");
+    }
+
+    // 유저 정보 업데이트
+    public void userInfoUpdate()
+    {
+        //string inDate =  Backend.GameInfo.Insert("character").GetReturnValue();
+        
+        // 유저 돈
+        Param param = new Param();
+        param.Add("money", info.rockCount);
+
+        // 업데이트
+        BackendReturnObject BRO = Backend.GameInfo.Update("character", "2020-06-30T13:26:34.132Z", param);
+
+        if (BRO.IsSuccess())        print("유저 정보 업데이트 완료");
+        else
+        {
+            print(BRO.GetErrorCode());
+        }
+    }
+    #endregion
 }
