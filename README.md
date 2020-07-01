@@ -8,4 +8,4 @@
 * 2020.06.13 ~
 
 ### Development Record
-* https://cheolmini.tistory.com/category/DevLog/%5B%EA%B0%9C%EB%B0%9C%EC%A4%91%5D%20Gravity%20Tycoon
+* [My Blog](https://cheolmini.tistory.com/category/DevLog/%5B%EA%B0%9C%EB%B0%9C%EC%A4%91%5D%20Gravity%20Tycoon)
