@@ -17,7 +17,7 @@ public class ServerManager : MonoBehaviour
     [Header("Main")]
     public Transform noticeObj;
 
-    public static bool backendInit = false;
+  //  public static bool backendInit = false;
 
     string id = "ccm11441";
     string pw = "cjfals12";
@@ -26,14 +26,15 @@ public class ServerManager : MonoBehaviour
 
     void Awake()
     {
-        if (!backendInit)
+        if (SceneManager.GetActiveScene().name == "Title")
         {
             startBtn.interactable = false;
             Backend.Initialize(HandleBackendCallback);
         }
         else
         {
-            getNoti();
+            Backend.Initialize(HandleBackendCallback);
+           // getNoti();
         }
     }
     
@@ -43,8 +44,7 @@ public class ServerManager : MonoBehaviour
         if (Backend.IsInitialized)
         {
             Debug.Log("뒤끝SDK 초기화 완료");
-            startBtn.interactable = true;
-            backendInit = true;
+            if (SceneManager.GetActiveScene().name == "Title") startBtn.interactable = true;
 
             getTempNoti();
             // example 
@@ -102,32 +102,58 @@ public class ServerManager : MonoBehaviour
         });
     }
 
-    // 서버에 있는 공지를 받아옴
+    // 서버에 있는 공지를 동기 방식으로 받아옴
     // 이미지는 코루틴을 통해 받아옴
-    void getNoti()
+    public void getNoti()
     {
         BackendReturnObject bro = Backend.Notice.NoticeList();
 
         if (bro.IsSuccess())
         {
+            
             JsonData noticeData = bro.GetReturnValuetoJSON()["rows"][0];
-
+            
             string date = noticeData["postingDate"][0].ToString();
-            string title = noticeData["title"][0].ToString();
-            string content = noticeData["content"][0].ToString().Substring(0,10);
-            string URL = "http://upload-console.thebackend.io" + noticeData["imageKey"][0];
+            print(date);
+            //string title = noticeData["title"][0].ToString();
+            //string content = noticeData["content"][0].ToString().Substring(0,10);
+            //string URL = "http://upload-console.thebackend.io" + noticeData["imageKey"][0];
 
-            noticeObj.GetChild(0).GetComponent<Text>().text = date;
-            noticeObj.GetChild(1).GetComponent<Text>().text = title;
-            noticeObj.GetChild(2).GetComponent<Text>().text = content;
-            StartCoroutine(WWWImageDown(URL));
+            //noticeObj.GetChild(0).GetComponent<Text>().text = date;
+            //noticeObj.GetChild(1).GetComponent<Text>().text = title;
+            //noticeObj.GetChild(2).GetComponent<Text>().text = content;
+            //StartCoroutine(WWWImageDown(URL));
             
         }
+    }
+
+    // 비동기로 공지 로드
+    public void getAsyncNoti()
+    {
+        BackendAsyncClass.BackendAsync(Backend.Notice.NoticeList, (callback) =>
+         {
+             if (callback.IsSuccess())
+             {
+                 JsonData noticeData = callback.GetReturnValuetoJSON()["rows"][0];
+
+                 string date = noticeData["postingDate"][0].ToString();
+                 string title = noticeData["title"][0].ToString();
+                 string content = noticeData["content"][0].ToString().Substring(0, 10);
+                 string URL = "http://upload-console.thebackend.io" + noticeData["imageKey"][0];
+
+                 noticeObj.GetChild(0).GetComponent<Text>().text = date;
+                 noticeObj.GetChild(1).GetComponent<Text>().text = title;
+                 noticeObj.GetChild(2).GetComponent<Text>().text = content;
+
+                 StartCoroutine(WWWImageDown(URL));
+             }
+         });
     }
 
     // 공지 이미지를 받아온 뒤 최종적으로 공지 활성화
     IEnumerator WWWImageDown(string url)
     {
+        print("이미지 로드 중");
         UnityWebRequest wr = new UnityWebRequest(url);
         DownloadHandlerTexture texDl = new DownloadHandlerTexture(true);
         wr.downloadHandler = texDl;
@@ -140,12 +166,10 @@ public class ServerManager : MonoBehaviour
                 Texture2D t = texDl.texture;
                 Sprite s = Sprite.Create(t, new Rect(0, 0, t.width, t.height), Vector2.zero);
                 noticeObj.GetChild(3).GetComponent<Image>().sprite = s;
-
             }
 
             noticeObj.gameObject.SetActive(true);
         }
-
         else
         {
             Debug.LogError(wr.error);
@@ -176,7 +200,7 @@ public class ServerManager : MonoBehaviour
                 break;
             default:
                 print("로그인 성공");
-                SceneManager.LoadSceneAsync(1);
+              //  SceneManager.LoadSceneAsync(1);
                 break;
         }
     }
