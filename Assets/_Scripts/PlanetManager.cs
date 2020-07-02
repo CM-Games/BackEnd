@@ -32,8 +32,8 @@ public class PlanetManager : MonoBehaviour
     // 초기화
     void Init()
     {
-        info.rockCount = 1000;
-        info.gravity = -1f;
+        info.rockCount = 0;
+        info.gravity = -50f;
         info.radius = 0.8f;
         info.itemUpgradeValue = new int[System.Enum.GetValues(typeof(Item)).Length];
         info.gravityPrice = 300;
@@ -78,8 +78,7 @@ public class PlanetManager : MonoBehaviour
 
     // 현재 터치한 오브젝트가 어떤건지 가져옴
     public void getTouchTarget()
-    {
-      
+    {      
         RaycastHit hit;
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
         Physics.Raycast(ray, out hit);
