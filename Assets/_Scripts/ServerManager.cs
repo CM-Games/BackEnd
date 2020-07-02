@@ -8,6 +8,10 @@ using LitJson;
 using System;
 using UnityEngine.Networking;
 
+public static class userInfo{
+    public static string inDate;
+}
+
 public class ServerManager : MonoBehaviour
 {
     [Header("Title")]
@@ -17,7 +21,7 @@ public class ServerManager : MonoBehaviour
     [Header("Main")]
     public Transform noticeObj;
 
-  //  public static bool backendInit = false;
+    //  public static bool backendInit = false;
 
     string id = "ccm11441";
     string pw = "cjfals12";
@@ -34,10 +38,10 @@ public class ServerManager : MonoBehaviour
         else
         {
             Backend.Initialize(HandleBackendCallback);
-           // getNoti();
+            // getNoti();
         }
     }
-    
+
     // 서버 초기화
     void HandleBackendCallback()
     {
@@ -69,7 +73,6 @@ public class ServerManager : MonoBehaviour
     {
         JsonData data = JsonMapper.ToObject(Backend.Utils.GetServerTime().GetReturnValue());
         serverTime = data["utcTime"].ToString();
-        print(serverTime);
     }
     #endregion
 
@@ -110,9 +113,9 @@ public class ServerManager : MonoBehaviour
 
         if (bro.IsSuccess())
         {
-            
+
             JsonData noticeData = bro.GetReturnValuetoJSON()["rows"][0];
-            
+
             string date = noticeData["postingDate"][0].ToString();
             print(date);
             //string title = noticeData["title"][0].ToString();
@@ -123,7 +126,7 @@ public class ServerManager : MonoBehaviour
             //noticeObj.GetChild(1).GetComponent<Text>().text = title;
             //noticeObj.GetChild(2).GetComponent<Text>().text = content;
             //StartCoroutine(WWWImageDown(URL));
-            
+
         }
     }
 
@@ -200,7 +203,8 @@ public class ServerManager : MonoBehaviour
                 break;
             default:
                 print("로그인 성공");
-              //  SceneManager.LoadSceneAsync(1);
+               // getIndate();
+                //  SceneManager.LoadSceneAsync(1);
                 break;
         }
     }
@@ -219,19 +223,37 @@ public class ServerManager : MonoBehaviour
                 break;
         }
     }
+
+    // 로그인 후 유저 Indate 값 가져옴
+    public void getIndate()
+    {
+        BackendReturnObject bro = Backend.BMember.GetUserInfo();
+
+        if (bro.IsSuccess())
+        {
+            JsonData indateJson = bro.GetReturnValuetoJSON()["row"];
+
+            userInfo.inDate = indateJson["inDate"].ToString();
+            print("user inDate : " + userInfo.inDate);
+
+            print(Backend.GameInfo.GetTableList());
+        }
+    }
     #endregion
 
     #region 유저 정보 업데이트 및 로드
 
     // 유저 정보 최초 테이블 생성
     public void userInfoInit()
-    {       
+    {
         // 유저 돈
         Param param = new Param();
         param.Add("money", 0);
+        param.Add("gravity", info.itemUpgradeValue[0]);
 
         // 정보 삽입
         Backend.GameInfo.Insert("character", param).GetReturnValue();
+
 
         print("유저 정보 생성 완료");
     }
@@ -240,18 +262,102 @@ public class ServerManager : MonoBehaviour
     public void userInfoUpdate()
     {
         //string inDate =  Backend.GameInfo.Insert("character").GetReturnValue();
-        
+
         // 유저 돈
         Param param = new Param();
         param.Add("money", info.rockCount);
+        param.Add("gravity", info.itemUpgradeValue[0]);
 
         // 업데이트
-        BackendReturnObject BRO = Backend.GameInfo.Update("character", "2020-06-30T13:26:34.132Z", param);
+        BackendReturnObject BRO = Backend.GameInfo.Update("character", userInfo.inDate, param);
 
-        if (BRO.IsSuccess())        print("유저 정보 업데이트 완료");
+        if (BRO.IsSuccess()) print("유저 정보 업데이트 완료");
         else
         {
             print(BRO.GetErrorCode());
+        }
+    }
+
+    // 유저 정보 로드
+    public void userInfoLoad()
+    {
+        BackendReturnObject bro = Backend.GameInfo.GetPrivateContents("character");
+
+        if (bro.IsSuccess())
+        {
+            GetGameInfo(bro.GetReturnValuetoJSON());
+        }
+    }
+
+    void GetGameInfo(JsonData returnData)
+    {
+        // ReturnValue가 존재하고, 데이터가 있는지 확인
+        if (returnData != null)
+        {
+            Debug.Log("데이터가 존재합니다.");
+
+            // rows 로 전달받은 경우 
+            if (returnData.Keys.Contains("rows"))
+            {
+                JsonData rows = returnData["rows"];
+                for (int i = 0; i < rows.Count; i++)
+                {
+                    GetData(rows[i]);
+                }
+            }
+
+            // row 로 전달받은 경우
+            else if (returnData.Keys.Contains("row"))
+            {
+                JsonData row = returnData["row"];
+                GetData(row[0]);
+            }
+        }
+        else
+        {
+            Debug.Log("데이터가 없습니다.");
+        }
+    }
+
+    void GetData(JsonData data)
+    {
+        //var money = data["money"][0];
+        //var gravity = data["gravity"][0];
+
+        if (data.Keys.Contains("inDate"))
+        {
+            userInfo.inDate = data["inDate"][0].ToString();
+            print("user inDate : " + userInfo.inDate);
+        }
+
+
+        //Debug.Log("money: " + money);
+        //print("gravity: " + gravity);
+
+        // 아래는 해당 키가 존재하는지 확인하고 데이터를 파싱하는 방법입니다. 
+        if (data.Keys.Contains("money"))
+        {
+            info.rockCount = int.Parse(data["money"][0].ToString());
+            UIManager.instance.setRockCount();
+        }
+        else
+        {
+            Debug.Log("존재하지 않는 키 입니다.");
+        }
+
+        // 해당 값이 배열로 저장되어 있을 경우는 아래와 같이 키가 존재하는지 확인합니다.
+        if (data.Keys.Contains("equipItem"))
+        {
+            JsonData equipData = data["equipItem"][0];
+
+            if (equipData.Keys.Contains("weapon"))
+            {
+                Debug.Log("weapon: " + equipData["weapon"][0]);
+            }
+            else
+            {
+                Debug.Log("존재하지 않는 키 입니다.");
+            }
         }
     }
     #endregion

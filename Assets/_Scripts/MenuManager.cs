@@ -19,7 +19,7 @@ public class MenuManager : MonoBehaviour
             info.gravity -= 1;
 
             UIManager.instance.setItemPrice();
-            info.gravityPrice += (int)info.gravity * -50;
+            info.gravityPrice += (int)info.gravity * -50;            
 
             item = PlanetManager.Item.Gravity;
             reset = true;
@@ -41,6 +41,7 @@ public class MenuManager : MonoBehaviour
 
         if (reset)
         {
+            info.itemUpgradeValue[value]++;
             UIManager.instance.setItemPrice();
             UIManager.instance.setRockCount();
             UIManager.instance.setPlanetValue(item);
