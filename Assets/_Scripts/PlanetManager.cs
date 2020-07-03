@@ -32,7 +32,7 @@ public class PlanetManager : MonoBehaviour
     // 초기화
     void Init()
     {
-        info.rockCount = 0;
+        info.rockCount = 10000;
         info.gravity = -50f;
         info.radius = 0.8f;
         info.itemUpgradeValue = new int[System.Enum.GetValues(typeof(Item)).Length];

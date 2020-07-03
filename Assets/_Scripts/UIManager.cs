@@ -26,6 +26,10 @@ public class UIManager : MonoBehaviour
     int gravityNumberCount;               // 중력 가격이 몇자리 숫자인지
     int expandNumberCount;                // 확장 가격이 몇자리 숫자인지 
 
+    [Header("Planet")]
+    public Toggle rangeToggle;            // 중력 범위 표시할 토글
+    public ParticleSystem rangeParticle;  // 중력 범위 표시할 파티클
+
     StringBuilder stringBuilder;          // 스트링 합칠때 쓸려고 만듬
 
     private void Awake()
@@ -123,6 +127,22 @@ public class UIManager : MonoBehaviour
             menuButton.GetComponent<Image>().DOColor(new Color(1, 1, 1), 0.3f).SetEase(Ease.Linear);
             menuImage.transform.DOLocalMoveX(0, 0.5f).SetEase(Ease.OutQuart);
         }
+    }
+
+
+    public void changeRangeToggle(bool init = false)
+    {
+        if (!init)
+        {
+            if (rangeToggle.isOn) rangeParticle.Play();
+            else rangeParticle.Stop();
+        }
+        else
+        {
+            rangeParticle.Clear();
+        }
+        
+                
     }
 
 }
