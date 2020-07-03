@@ -18,6 +18,8 @@ public class MenuManager : MonoBehaviour
             info.rockCount -= info.gravityPrice;
             info.gravity -= 1;
 
+           
+
             UIManager.instance.setItemPrice();
             info.gravityPrice += (int)info.gravity * -50;            
 
@@ -34,6 +36,10 @@ public class MenuManager : MonoBehaviour
 
             item = PlanetManager.Item.Expand;
             reset = true;
+
+            var getRadius = UIManager.instance.rangeParticle.shape;
+            getRadius.radius += 0.5f;
+            UIManager.instance.changeRangeToggle(true);
 
             PlanetManager.instance.setRadius();
         }
