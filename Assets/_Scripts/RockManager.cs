@@ -16,9 +16,7 @@ public class RockManager : MonoBehaviour
 
     private void Awake()
     {
-        coroutine = manage();
-        speed = Random.Range(5, 50);
-        rotateSpeed = speed;
+        coroutine = manage();       
         rotateAround = false;
     }
 
@@ -27,12 +25,15 @@ public class RockManager : MonoBehaviour
         float timer = 0;
         int temp = 0;
 
-        while (true)
-        {
-            transform.Translate(new Vector3(speed, 0, 0) * Time.deltaTime, Space.World);
+        speed = Random.Range(5, 50);
+        rotateSpeed = speed;
+        gameObject.GetComponent<Rigidbody>().velocity = Vector3.zero;
 
+        while (true)
+        {         
             if (rotateAround)
             {
+                transform.Translate(new Vector3(speed, 0, 0) * Time.deltaTime, Space.World);
                 if (timer <= 1)
                 {
                     speed = (int)Mathf.Lerp(rotateSpeed, rotateSpeed * 0.7f, timer);
@@ -56,7 +57,7 @@ public class RockManager : MonoBehaviour
     void callReturnPool()
     {
         transform.position = new Vector3(-95, 0, 0);
-        speed = 0;
+       
         PoolingManager.instance.returnPool(gameObject);
     }
 
