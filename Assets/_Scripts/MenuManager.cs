@@ -18,8 +18,6 @@ public class MenuManager : MonoBehaviour
             info.rockCount -= info.gravityPrice;
             info.gravity -= 1;
 
-           
-
             UIManager.instance.setItemPrice();
             info.gravityPrice += (int)info.gravity * -50;            
 
