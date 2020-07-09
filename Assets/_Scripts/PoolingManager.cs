@@ -19,7 +19,7 @@ public class PoolingManager : MonoBehaviour
     {
         Rock = new Queue<GameObject>();
 
-        for (int i = 0; i < 300; i++)
+        for (int i = 0; i < 30; i++)
         {
             GameObject obj = Instantiate(Rock_pref, transform);
             Rock.Enqueue(obj);
@@ -32,14 +32,14 @@ public class PoolingManager : MonoBehaviour
         GameObject obj = Rock.Dequeue();
        
         obj.SetActive(true);
-        StartCoroutine(obj.GetComponent<RockManager>().coroutine);
+      //  StartCoroutine(obj.GetComponent<RockManager>().coroutine);
         return obj;
     }
 
     public void returnPool(GameObject obj)
     {
         Rock.Enqueue(obj);
-        StopCoroutine(obj.GetComponent<RockManager>().coroutine);
+       // StopCoroutine(obj.GetComponent<RockManager>().coroutine);
         obj.SetActive(false);
     }
 }
