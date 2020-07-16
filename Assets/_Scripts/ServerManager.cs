@@ -55,7 +55,8 @@ public class ServerManager : MonoBehaviour
         #endregion
     }
 
-    #region 회원가입 및 로그인(동기, 비동기)
+    #region 유저 관리
+
     // 동기방식 회원가입
     public void Register()
     {
@@ -63,7 +64,6 @@ public class ServerManager : MonoBehaviour
 
         if (BRO.IsSuccess()) print("동기방식 회원가입 성공");
         else Error(BRO.GetErrorCode());
-
     }
 
     // 동기방식 로그인
@@ -94,6 +94,52 @@ public class ServerManager : MonoBehaviour
             isSuccess = true;
         });
     }
+    
+    // 동기 방식 로그아웃
+    public void LogOut()
+    {
+        Backend.BMember.Logout();
+        ID.text = PW.text = "";
+        print("동기 방식 로그아웃 성공");
+    }
+
+    // 비동기 방식 로그아웃
+    public void LogOutAsync()
+    {
+        BackendAsyncClass.BackendAsync(Backend.BMember.Logout, (callback) => {
+            if (callback.IsSuccess())
+            {
+                ID.text = PW.text = "";
+                print("비동기 방식 로그아웃 성공");
+            }
+        });
+    }
+
+    // 동기 방식 회원탈퇴
+    public void SignOut()
+    {
+        // Backend.BMember.SignOut("reason");
+        // 이유도 작성할 수 있습니다.
+        Backend.BMember.SignOut();
+        ID.text = PW.text = "";
+        print("동기 방식 회원탈퇴 성공");
+    }
+
+    // 비동기 방식 회원탈퇴
+    public void SignOutAsync()
+    {
+        // BackendAsyncClass.BackendAsync(Backend.BMember.SignOut, "reason", ( callback )
+        // 비동기 방식도 이유를  작성할 수 있습니다.
+        BackendAsyncClass.BackendAsync(Backend.BMember.SignOut, (callback) =>
+        {
+            if (callback.IsSuccess())
+            {
+                ID.text = PW.text = "";
+                print("비동기 방식 회원탈퇴 성공");
+            }
+        });
+    }
+
     #endregion
 
     // 에러 코드 확인
