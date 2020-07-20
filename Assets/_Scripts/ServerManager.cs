@@ -14,6 +14,7 @@ public class ServerManager : MonoBehaviour
     [Header("User Info")]
     public InputField Nickname;
     public InputField email;
+    public InputField newPW;
     public Text userInfo;
 
     // 비동기 회원가입 및 로그인을 구현 할때 사용할 변수
@@ -232,6 +233,44 @@ public class ServerManager : MonoBehaviour
         });
     }
 
+    // 동기 방식 비밀번호 초기화
+    public void ResetPW()
+    {
+        BackendReturnObject BRO = Backend.BMember.ResetPassword(ID.text, email.text);
+
+        if (BRO.IsSuccess()) print("동기 방식 초기화된 비밀번호 발송 완료");
+        else Error(BRO.GetErrorCode(), "UserPW");
+    }
+
+    // 동기 방식 비밀번호 변경
+    public void UpdatePW()
+    {
+        BackendReturnObject BRO= Backend.BMember.UpdatePassword(PW.text, newPW.text);
+
+        if (BRO.IsSuccess()) print("동기 방식 비밀번호 변경 완료");
+        else Error(BRO.GetErrorCode(), "UserPW");
+    }
+
+    // 비동기 방식 비밀번호 초기화
+    public void ResetPWAsync()
+    {
+        BackendAsyncClass.BackendAsync(Backend.BMember.ResetPassword, ID.text, email.text, (callback) =>
+        {
+            if (callback.IsSuccess()) print("비동기 방식 초기화된 비밀번호 발송 완료");
+            else Error(callback.GetErrorCode(), "UserPW");
+        });
+    }
+
+    // 비동기 방식 비밀번호 변경
+    public void UpdatePWAsync()
+    {
+        BackendAsyncClass.BackendAsync(Backend.BMember.UpdatePassword, PW.text,newPW.text, (callback) =>
+        {
+            if (callback.IsSuccess()) print("비동기 방식 비밀번호 변경 완료");
+            else Error(callback.GetErrorCode(), "UserPW");
+        });
+    }
+
 
     #endregion // 유저 정보 관리
 
@@ -256,6 +295,15 @@ public class ServerManager : MonoBehaviour
         else if (errorCode == "BadParameterException")
         {
             if (type == "UserNickname") print("닉네임 앞/뒤 공백이 있거나 20자 이상입니다.");
+            if (type == "UserPW") print("잘못된 이메일입니다.");
+        }
+        else if (errorCode == "NotFoundException")
+        {
+            if (type == "UserPW") print("등록된 이메일이 없습니다.");
+        }
+        else if (errorCode == "Too Many Request")
+        {
+            if (type == "UserPW") print("요청 횟수를 초과하였습니다. (1일 5회)");
         }
     }
 }
