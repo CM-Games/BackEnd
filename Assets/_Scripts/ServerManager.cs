@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using BackEnd;
 using LitJson;
+using System;
 
 public class ServerManager : MonoBehaviour
 {
@@ -16,6 +17,10 @@ public class ServerManager : MonoBehaviour
     public InputField email;
     public InputField newPW;
     public Text userInfo;
+    public Text loginState;
+
+    [Header("Game Manager")]
+    public Transform tempNotice;
 
     // 비동기 회원가입 및 로그인을 구현 할때 사용할 변수
     BackendReturnObject bro = new BackendReturnObject();
@@ -53,7 +58,11 @@ public class ServerManager : MonoBehaviour
             // 비동기 메소드는 update()문에서 SaveToken을 꼭 적용해야 합니다.
             BackendReturnObject saveToken = Backend.BMember.SaveToken(bro);
 
-            if (saveToken.IsSuccess()) print("비동기 로그인 성공");
+            if (saveToken.IsSuccess())
+            {
+                print("비동기 로그인 성공");
+                loginState.text = "로그인 상태 : 로그인";
+            }
             else Error(bro.GetErrorCode(), "UserFunc");
 
             isSuccess = false;
@@ -79,7 +88,11 @@ public class ServerManager : MonoBehaviour
     {
         BackendReturnObject BRO = Backend.BMember.CustomLogin(ID.text, PW.text);
 
-        if (BRO.IsSuccess()) print("동기방식 로그인 성공");
+        if (BRO.IsSuccess())
+        {
+            print("동기방식 로그인 성공");
+            loginState.text = "로그인 상태 : 로그인";
+        }
         else Error(BRO.GetErrorCode(), "UserFunc");
     }
 
@@ -108,7 +121,9 @@ public class ServerManager : MonoBehaviour
     {
         Backend.BMember.Logout();
         ID.text = PW.text = "";
+        loginState.text = "로그인 상태 : 비로그인";
         print("동기 방식 로그아웃 성공");
+
     }
 
     // 비동기 방식 로그아웃
@@ -119,6 +134,7 @@ public class ServerManager : MonoBehaviour
             if (callback.IsSuccess())
             {
                 ID.text = PW.text = "";
+                loginState.text = "로그인 상태 : 비로그인";
                 print("비동기 방식 로그아웃 성공");
             }
         });
@@ -221,7 +237,7 @@ public class ServerManager : MonoBehaviour
     {
         BackendReturnObject BRO = Backend.BMember.UpdateCustomEmail(email.text);
 
-        if (BRO.IsSuccess()) print("동기 방식 이메일 등록 완료");        
+        if (BRO.IsSuccess()) print("동기 방식 이메일 등록 완료");
     }
 
     // 비동기 방식 이메일 등록
@@ -245,7 +261,7 @@ public class ServerManager : MonoBehaviour
     // 동기 방식 비밀번호 변경
     public void UpdatePW()
     {
-        BackendReturnObject BRO= Backend.BMember.UpdatePassword(PW.text, newPW.text);
+        BackendReturnObject BRO = Backend.BMember.UpdatePassword(PW.text, newPW.text);
 
         if (BRO.IsSuccess()) print("동기 방식 비밀번호 변경 완료");
         else Error(BRO.GetErrorCode(), "UserPW");
@@ -264,11 +280,11 @@ public class ServerManager : MonoBehaviour
     // 비동기 방식 비밀번호 변경
     public void UpdatePWAsync()
     {
-        BackendAsyncClass.BackendAsync(Backend.BMember.UpdatePassword, PW.text,newPW.text, (callback) =>
-        {
-            if (callback.IsSuccess()) print("비동기 방식 비밀번호 변경 완료");
-            else Error(callback.GetErrorCode(), "UserPW");
-        });
+        BackendAsyncClass.BackendAsync(Backend.BMember.UpdatePassword, PW.text, newPW.text, (callback) =>
+         {
+             if (callback.IsSuccess()) print("비동기 방식 비밀번호 변경 완료");
+             else Error(callback.GetErrorCode(), "UserPW");
+         });
     }
 
 
@@ -276,6 +292,39 @@ public class ServerManager : MonoBehaviour
 
     #endregion // 유저 관리
 
+    #region 운영관리
+    // 비동기 방식 임시 공지사항
+    // 임시 공지사항은 비동기 방식으로만 작동합니다.
+    public void getTempNotice()
+    {
+        Backend.Notice.GetTempNotice(callback =>
+        {
+            JsonData data = JsonMapper.ToObject(callback);
+
+            bool isUse = (bool)data["isUse"];
+            string contents = data["contents"].ToString();
+
+            if (isUse)
+            {
+                print("임시 공지사항을 가져왔습니다.");
+                tempNotice.GetChild(2).GetComponent<Text>().text = contents;
+                tempNotice.gameObject.SetActive(true);
+            }
+            else print("임시 공지사항이 등록되어 있지 않습니다.");
+        });
+    }
+
+    // 공지사항 닫기
+    public void exitNotice(int type)
+    {
+        // 임시공지
+        if (type == 0) tempNotice.gameObject.SetActive(false);
+    }
+
+    #endregion
+
+
+    #region 예외처리
     // 에러 코드 확인
     void Error(string errorCode, string type)
     {
@@ -306,4 +355,5 @@ public class ServerManager : MonoBehaviour
             if (type == "UserPW") print("요청 횟수를 초과하였습니다. (1일 5회)");
         }
     }
+    #endregion
 }
