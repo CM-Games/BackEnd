@@ -5,6 +5,7 @@ using UnityEngine.UI;
 using BackEnd;
 using LitJson;
 using System;
+using UnityEngine.Networking;
 
 public class ServerManager : MonoBehaviour
 {
@@ -21,6 +22,8 @@ public class ServerManager : MonoBehaviour
 
     [Header("Game Manager")]
     public Transform tempNotice;
+    public Transform Notice;
+    string linkURL;
 
     // 비동기 회원가입 및 로그인을 구현 할때 사용할 변수
     BackendReturnObject bro = new BackendReturnObject();
@@ -293,6 +296,7 @@ public class ServerManager : MonoBehaviour
     #endregion // 유저 관리
 
     #region 운영관리
+
     // 비동기 방식 임시 공지사항
     // 임시 공지사항은 비동기 방식으로만 작동합니다.
     public void getTempNotice()
@@ -314,11 +318,97 @@ public class ServerManager : MonoBehaviour
         });
     }
 
+    // 동기 방식 공지사항
+    public void getNotice()
+    {
+        BackendReturnObject BRO = Backend.Notice.NoticeList();
+
+        if (BRO.IsSuccess())
+        {
+
+            JsonData noticeData = BRO.GetReturnValuetoJSON()["rows"][0];
+
+            string date = noticeData["postingDate"][0].ToString();
+            string title = noticeData["title"][0].ToString();
+            string content = noticeData["content"][0].ToString().Substring(0, 10);
+            string imgURL = "http://upload-console.thebackend.io" + noticeData["imageKey"][0];
+            linkURL = noticeData["linkUrl"][0].ToString();
+
+            Notice.GetChild(6).GetComponent<Text>().text = date;
+            Notice.GetChild(5).GetComponent<Text>().text = title;
+            Notice.GetChild(7).GetComponent<Text>().text = content;
+            StartCoroutine(WWWImageDown(imgURL));
+
+        }
+    }
+
+    // 비동기 방식 공지사항
+    public void getNoticeAsync()
+    {
+        BackendAsyncClass.BackendAsync(Backend.Notice.NoticeList, (callback) =>
+        {
+            if (callback.IsSuccess())
+            {
+                JsonData noticeData = callback.GetReturnValuetoJSON()["rows"][0];
+
+                string date = noticeData["postingDate"][0].ToString();
+                string title = noticeData["title"][0].ToString();
+                string content = noticeData["content"][0].ToString().Substring(0, 10);
+                string imgURL = "http://upload-console.thebackend.io" + noticeData["imageKey"][0];
+                linkURL = noticeData["linkUrl"][0].ToString();               
+
+                Notice.GetChild(6).GetComponent<Text>().text = date;
+                Notice.GetChild(5).GetComponent<Text>().text = title;
+                Notice.GetChild(7).GetComponent<Text>().text = content;
+                
+                StartCoroutine(WWWImageDown(imgURL));                
+            }
+        });
+    }
+
+    // 공지 이미지를 받아온 뒤 최종적으로 공지 활성화
+    IEnumerator WWWImageDown(string url)
+    {
+        UnityWebRequest wr = new UnityWebRequest(url);
+        DownloadHandlerTexture texDl = new DownloadHandlerTexture(true);
+        wr.downloadHandler = texDl;
+        yield return wr.SendWebRequest();
+
+        if (!(wr.isNetworkError || wr.isHttpError))
+        {
+            if (texDl.texture != null)
+            {
+                print("이미지 로드 완료");
+                Texture2D t = texDl.texture;
+                Sprite s = Sprite.Create(t, new Rect(0, 0, t.width, t.height), Vector2.zero);
+                Notice.GetChild(4).GetComponent<Image>().sprite = s;
+            }
+        }
+        else
+        {
+            print("이미지가 없습니다.");
+        }
+
+        Notice.gameObject.SetActive(true);
+    }
+
     // 공지사항 닫기
     public void exitNotice(int type)
     {
         // 임시공지
         if (type == 0) tempNotice.gameObject.SetActive(false);
+        else if (type == 1) Notice.gameObject.SetActive(false);
+    }
+
+    // 연결 링크가 있다면 링크 오픈
+    public void openUrl()
+    {
+        if (linkURL != null)
+        {
+            Application.OpenURL(linkURL);
+            print(linkURL + " 연결 완료");
+        }
+        else print("연결 할 링크가 없습니다");
     }
 
     #endregion
