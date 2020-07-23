@@ -23,6 +23,8 @@ public class ServerManager : MonoBehaviour
     [Header("Game Manager")]
     public Transform tempNotice;
     public Transform Notice;
+    public Transform Event;
+    public InputField coupon;
     string linkURL;
 
     // 비동기 회원가입 및 로그인을 구현 할때 사용할 변수
@@ -297,6 +299,7 @@ public class ServerManager : MonoBehaviour
 
     #region 운영관리
 
+    #region 임시공지사항, 공지사항
     // 비동기 방식 임시 공지사항
     // 임시 공지사항은 비동기 방식으로만 작동합니다.
     public void getTempNotice()
@@ -337,8 +340,10 @@ public class ServerManager : MonoBehaviour
             Notice.GetChild(6).GetComponent<Text>().text = date;
             Notice.GetChild(5).GetComponent<Text>().text = title;
             Notice.GetChild(7).GetComponent<Text>().text = content;
-            StartCoroutine(WWWImageDown(imgURL));
+            StartCoroutine(WWWImageDown(imgURL,Notice.GetChild(4).GetComponent<Image>()));
+            Notice.gameObject.SetActive(true);
 
+            print("동기 방식 공지사항 받아오기 완료");
         }
     }
 
@@ -361,13 +366,88 @@ public class ServerManager : MonoBehaviour
                 Notice.GetChild(5).GetComponent<Text>().text = title;
                 Notice.GetChild(7).GetComponent<Text>().text = content;
                 
-                StartCoroutine(WWWImageDown(imgURL));                
+                StartCoroutine(WWWImageDown(imgURL, Notice.GetChild(4).GetComponent<Image>()));
+                Notice.gameObject.SetActive(true);
+                print("비동기 방식 공지사항 받아오기 완료");
             }
         });
     }
+    #endregion // 임시공지사항, 공지사항
 
-    // 공지 이미지를 받아온 뒤 최종적으로 공지 활성화
-    IEnumerator WWWImageDown(string url)
+    #region 이벤트, 쿠폰
+    // 동기 방식 이벤트 받아오기
+    public void getEvent()
+    {
+        BackendReturnObject BRO = Backend.Event.EventList();
+
+        if (BRO.IsSuccess())
+        {
+            JsonData eventData = BRO.GetReturnValuetoJSON()["rows"][0];
+
+            string title = eventData["title"][0].ToString();
+            string contents = eventData["content"][0].ToString();
+            string startDate = eventData["startDate"][0].ToString().Substring(0, 10);
+            string endDate = eventData["endDate"][0].ToString().Substring(0, 10);
+            string imgURL = "http://upload-console.thebackend.io" + eventData["contentImageKey"][0];
+            
+            Event.GetChild(1).GetComponent<Text>().text = title;
+            Event.GetChild(2).GetComponent<Text>().text = contents;
+            Event.GetChild(3).GetComponent<Text>().text = startDate + " ~ " + endDate;
+            
+            StartCoroutine(WWWImageDown(imgURL, Event.GetChild(5).GetComponent<Image>()));
+
+            Event.gameObject.SetActive(true);
+            print("동기 방식 이벤트 받아오기 완료");
+        }
+    }
+
+    // 비동기 방식 이벤트 받아오기
+    public void getEventAsync()
+    {
+        BackendAsyncClass.BackendAsync(Backend.Event.EventList, (callback) =>
+        {
+            JsonData eventData = callback.GetReturnValuetoJSON()["rows"][0];
+
+            string title = eventData["title"][0].ToString();
+            string contents = eventData["content"][0].ToString();
+            string startDate = eventData["startDate"][0].ToString().Substring(0, 10);
+            string endDate = eventData["endDate"][0].ToString().Substring(0, 10);
+            string imgURL = "http://upload-console.thebackend.io" + eventData["contentImageKey"][0];
+
+            Event.GetChild(1).GetComponent<Text>().text = title;
+            Event.GetChild(2).GetComponent<Text>().text = contents;
+            Event.GetChild(3).GetComponent<Text>().text = startDate + " ~ " + endDate;
+
+            StartCoroutine(WWWImageDown(imgURL, Event.GetChild(5).GetComponent<Image>()));
+
+            Event.gameObject.SetActive(true);
+            print("비동기 방식 이벤트 받아오기 완료");
+        });       
+    }
+
+    // 동기 방식 쿠폰 사용
+    public void useCoupon()
+    {
+        BackendReturnObject BRO = Backend.Coupon.UseCoupon(coupon.text);
+
+        if (BRO.IsSuccess()) print("쿠폰 사용 성공");
+        else Error(BRO.GetErrorCode(), "Coupon");
+    }
+
+    // 비동기 방식 쿠폰 사용
+    public void useCouponAsync()
+    {
+        BackendAsyncClass.BackendAsync(Backend.Coupon.UseCoupon, coupon.text, (callback) =>
+        {
+            if (callback.IsSuccess()) print("쿠폰 사용 성공");
+            else Error(callback.GetErrorCode(), "Coupon");
+        });
+    }
+    #endregion // 이벤트, 쿠폰
+
+    #region 이미지로드, 기타 함수
+    // 이미지 로드
+    IEnumerator WWWImageDown(string url, Image image)
     {
         UnityWebRequest wr = new UnityWebRequest(url);
         DownloadHandlerTexture texDl = new DownloadHandlerTexture(true);
@@ -381,23 +461,18 @@ public class ServerManager : MonoBehaviour
                 print("이미지 로드 완료");
                 Texture2D t = texDl.texture;
                 Sprite s = Sprite.Create(t, new Rect(0, 0, t.width, t.height), Vector2.zero);
-                Notice.GetChild(4).GetComponent<Image>().sprite = s;
+                image.sprite = s;
             }
         }
-        else
-        {
-            print("이미지가 없습니다.");
-        }
-
-        Notice.gameObject.SetActive(true);
+        else print("이미지가 없습니다.");
     }
 
-    // 공지사항 닫기
+    // 팝업창 닫기
     public void exitNotice(int type)
     {
-        // 임시공지
         if (type == 0) tempNotice.gameObject.SetActive(false);
         else if (type == 1) Notice.gameObject.SetActive(false);
+        else if (type == 2) Event.gameObject.SetActive(false);
     }
 
     // 연결 링크가 있다면 링크 오픈
@@ -410,8 +485,9 @@ public class ServerManager : MonoBehaviour
         }
         else print("연결 할 링크가 없습니다");
     }
+    #endregion // 이미지로드, 기타 함수
 
-    #endregion
+    #endregion // 운영관리
 
 
     #region 예외처리
@@ -439,6 +515,7 @@ public class ServerManager : MonoBehaviour
         else if (errorCode == "NotFoundException")
         {
             if (type == "UserPW") print("등록된 이메일이 없습니다.");
+            else if (type == "Coupon") print("중복 사용이거나 기간이 만료된 쿠폰입니다.");
         }
         else if (errorCode == "Too Many Request")
         {
