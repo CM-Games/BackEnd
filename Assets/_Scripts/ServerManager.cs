@@ -27,6 +27,13 @@ public class ServerManager : MonoBehaviour
     public InputField coupon;
     string linkURL;
 
+    Dictionary<string, int> weapon = new Dictionary<string, int>
+{
+    { "gun", 1 },
+    { "knife", 5 },
+    { "punch", 3 }
+};
+
     // 비동기 회원가입 및 로그인을 구현 할때 사용할 변수
     BackendReturnObject bro = new BackendReturnObject();
     bool isSuccess = false;
@@ -297,7 +304,7 @@ public class ServerManager : MonoBehaviour
 
     #endregion // 유저 관리
 
-    #region 운영관리
+    #region 운영 관리
 
     #region 임시공지사항, 공지사항
     // 비동기 방식 임시 공지사항
@@ -340,7 +347,7 @@ public class ServerManager : MonoBehaviour
             Notice.GetChild(6).GetComponent<Text>().text = date;
             Notice.GetChild(5).GetComponent<Text>().text = title;
             Notice.GetChild(7).GetComponent<Text>().text = content;
-            StartCoroutine(WWWImageDown(imgURL,Notice.GetChild(4).GetComponent<Image>()));
+            StartCoroutine(WWWImageDown(imgURL, Notice.GetChild(4).GetComponent<Image>()));
             Notice.gameObject.SetActive(true);
 
             print("동기 방식 공지사항 받아오기 완료");
@@ -360,12 +367,12 @@ public class ServerManager : MonoBehaviour
                 string title = noticeData["title"][0].ToString();
                 string content = noticeData["content"][0].ToString().Substring(0, 10);
                 string imgURL = "http://upload-console.thebackend.io" + noticeData["imageKey"][0];
-                linkURL = noticeData["linkUrl"][0].ToString();               
+                linkURL = noticeData["linkUrl"][0].ToString();
 
                 Notice.GetChild(6).GetComponent<Text>().text = date;
                 Notice.GetChild(5).GetComponent<Text>().text = title;
                 Notice.GetChild(7).GetComponent<Text>().text = content;
-                
+
                 StartCoroutine(WWWImageDown(imgURL, Notice.GetChild(4).GetComponent<Image>()));
                 Notice.gameObject.SetActive(true);
                 print("비동기 방식 공지사항 받아오기 완료");
@@ -389,11 +396,11 @@ public class ServerManager : MonoBehaviour
             string startDate = eventData["startDate"][0].ToString().Substring(0, 10);
             string endDate = eventData["endDate"][0].ToString().Substring(0, 10);
             string imgURL = "http://upload-console.thebackend.io" + eventData["contentImageKey"][0];
-            
+
             Event.GetChild(1).GetComponent<Text>().text = title;
             Event.GetChild(2).GetComponent<Text>().text = contents;
             Event.GetChild(3).GetComponent<Text>().text = startDate + " ~ " + endDate;
-            
+
             StartCoroutine(WWWImageDown(imgURL, Event.GetChild(5).GetComponent<Image>()));
 
             Event.gameObject.SetActive(true);
@@ -422,7 +429,7 @@ public class ServerManager : MonoBehaviour
 
             Event.gameObject.SetActive(true);
             print("비동기 방식 이벤트 받아오기 완료");
-        });       
+        });
     }
 
     // 동기 방식 쿠폰 사용
@@ -489,6 +496,40 @@ public class ServerManager : MonoBehaviour
 
     #endregion // 운영관리
 
+    #region 정보 관리
+    #region 정보 삽입
+    // 동기 방식 정보 삽입
+    public void insertData()
+    {
+        Param param = new Param();
+        param.Add("exp", 100);
+        param.Add("level", 30);
+        param.Add("weapon", weapon);
+
+        BackendReturnObject BRO = Backend.GameInfo.Insert("character", param);
+
+        if (BRO.IsSuccess()) print("동기 방식 데이터 삽입 성공");
+        else Error(BRO.GetErrorCode(), "gameData");
+
+    }
+
+    // 비동기 방식 정보 삽입
+    public void insertDataAsync()
+    {
+        Param param = new Param();
+        param.Add("exp", 100);
+        param.Add("level", 30);
+        param.Add("weapon", weapon);
+
+        BackendAsyncClass.BackendAsync(Backend.GameInfo.Insert, "character", param, (callback) =>
+        {
+            if (callback.IsSuccess()) print("비동기 방식 데이터 삽입 성공");
+            else Error(callback.GetErrorCode(), "gameData");
+        });
+    }
+    #endregion // 정보 삽입
+    #endregion // 정보 관리
+
 
     #region 예외처리
     // 에러 코드 확인
@@ -516,10 +557,19 @@ public class ServerManager : MonoBehaviour
         {
             if (type == "UserPW") print("등록된 이메일이 없습니다.");
             else if (type == "Coupon") print("중복 사용이거나 기간이 만료된 쿠폰입니다.");
+            else if (type == "gameData") print("해당 테이블을 찾을 수 없습니다.");
         }
         else if (errorCode == "Too Many Request")
         {
             if (type == "UserPW") print("요청 횟수를 초과하였습니다. (1일 5회)");
+        }
+        else if (errorCode == "PreconditionFailed")
+        {
+            if (type == "gameData") print("해당 테이블은 비활성화 된 테이블 입니다.");
+        }
+        else if (errorCode == "ServerErrorException")
+        {
+            if (type == "gameData") print("하나의 row이 400KB를 넘습니다");
         }
     }
     #endregion
