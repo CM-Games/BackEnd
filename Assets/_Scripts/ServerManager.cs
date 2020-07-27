@@ -19,6 +19,7 @@ public class ServerManager : MonoBehaviour
     public InputField newPW;
     public Text userInfo;
     public Text loginState;
+    string dataIndate;
 
     [Header("Game Manager")]
     public Transform tempNotice;
@@ -497,7 +498,7 @@ public class ServerManager : MonoBehaviour
     #endregion // 운영관리
 
     #region 정보 관리
-    #region 정보 삽입
+    #region 스키마 미정의
     // 동기 방식 정보 삽입
     public void insertData()
     {
@@ -523,11 +524,88 @@ public class ServerManager : MonoBehaviour
 
         BackendAsyncClass.BackendAsync(Backend.GameInfo.Insert, "character", param, (callback) =>
         {
-            if (callback.IsSuccess()) print("비동기 방식 데이터 삽입 성공");
+            if (callback.IsSuccess())
+            {
+                print("비동기 방식 데이터 삽입 성공");
+            }
             else Error(callback.GetErrorCode(), "gameData");
         });
     }
-    #endregion // 정보 삽입
+
+    // 동기 방식 정보 읽기
+    public void readData()
+    {
+        BackendReturnObject BRO = Backend.GameInfo.GetPrivateContents("character");
+
+        if (BRO.IsSuccess())
+        {
+            JsonData jsonData = BRO.GetReturnValuetoJSON()["rows"][0];
+            string level = jsonData["level"][0].ToString();
+            string exp = jsonData["exp"][0].ToString();
+            string gunLevel = jsonData["weapon"][0]["gun"][0].ToString();
+            string knifeLevel = jsonData["weapon"][0]["knife"][0].ToString();
+            string punchLevel = jsonData["weapon"][0]["punch"][0].ToString();
+
+            dataIndate = jsonData["inDate"][0].ToString();
+
+            print($"Level : {level}    Exp : {exp}");
+            print($"Gun : LV.{gunLevel}    Knife : LV.{knifeLevel}    Punch : LV.{punchLevel}");
+            print("동기 방식 정보 읽기 완료");
+        }
+        else Error(BRO.GetErrorCode(), "ReadData");
+    }
+    
+    // 비동기 방식 정보 읽기
+    public void readDataAsync()
+    {
+        BackendAsyncClass.BackendAsync(Backend.GameInfo.GetPrivateContents, "character", (callback) =>
+        {
+            if (callback.IsSuccess())
+            {
+                JsonData jsonData = callback.GetReturnValuetoJSON()["rows"][0];
+                string level = jsonData["level"][0].ToString();
+                string exp = jsonData["exp"][0].ToString();
+                string gunLevel = jsonData["weapon"][0]["gun"][0].ToString();
+                string knifeLevel = jsonData["weapon"][0]["knife"][0].ToString();
+                string punchLevel = jsonData["weapon"][0]["punch"][0].ToString();
+
+                dataIndate = jsonData["inDate"][0].ToString();
+
+                print($"Level : {level}    Exp : {exp}");
+                print($"Gun : LV.{gunLevel}    Knife : LV.{knifeLevel}    Punch : LV.{punchLevel}");
+                print("비동기 방식 정보 읽기 완료");
+            }
+            else Error(callback.GetErrorCode(), "ReadData");
+        });
+    }
+
+    // 동기 방식 정보 수정
+    public void updateData()
+    {
+        Param param = new Param();
+        param.Add("exp", 110);
+        param.Add("level", 31);
+
+        BackendReturnObject BRO = Backend.GameInfo.Update("character", dataIndate, param);
+
+        if (BRO.IsSuccess()) print("정보 수정 성공");
+        else print(BRO.GetErrorCode());
+    }
+
+    // 비동기 방식 정보 수정
+    public void updateDataAsync()
+    {
+        Param param = new Param();
+        param.Add("exp", 120);
+        param.Add("level", 41);
+
+        BackendAsyncClass.BackendAsync(Backend.GameInfo.Update, "character", dataIndate, param, (callback) =>
+        {
+            if (callback.IsSuccess()) print("정보 수정 성공");
+            else print(callback.GetErrorCode());
+        });
+    }
+    #endregion // 스키마 미정의
     #endregion // 정보 관리
 
 
@@ -551,13 +629,15 @@ public class ServerManager : MonoBehaviour
         else if (errorCode == "BadParameterException")
         {
             if (type == "UserNickname") print("닉네임 앞/뒤 공백이 있거나 20자 이상입니다.");
-            if (type == "UserPW") print("잘못된 이메일입니다.");
+            else if (type == "UserPW") print("잘못된 이메일입니다.");
+            else if (type == "ReadData") print("잘못된 유형의 테이블 입니다.");
         }
         else if (errorCode == "NotFoundException")
         {
             if (type == "UserPW") print("등록된 이메일이 없습니다.");
             else if (type == "Coupon") print("중복 사용이거나 기간이 만료된 쿠폰입니다.");
             else if (type == "gameData") print("해당 테이블을 찾을 수 없습니다.");
+            else if (type == "ReadData") print("존재하지 않는 테이블 입니다");
         }
         else if (errorCode == "Too Many Request")
         {
@@ -565,7 +645,7 @@ public class ServerManager : MonoBehaviour
         }
         else if (errorCode == "PreconditionFailed")
         {
-            if (type == "gameData") print("해당 테이블은 비활성화 된 테이블 입니다.");
+            if (type == "gameData" || type == "ReadData") print("해당 테이블은 비활성화 된 테이블 입니다.");
         }
         else if (errorCode == "ServerErrorException")
         {
