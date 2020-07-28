@@ -585,6 +585,8 @@ public class ServerManager : MonoBehaviour
         Param param = new Param();
         param.Add("exp", 110);
         param.Add("level", 31);
+        weapon["gun"] = 11;
+        param.Add("weapon", weapon);
 
         BackendReturnObject BRO = Backend.GameInfo.Update("character", dataIndate, param);
 
@@ -598,6 +600,8 @@ public class ServerManager : MonoBehaviour
         Param param = new Param();
         param.Add("exp", 120);
         param.Add("level", 41);
+        weapon["knife"] = 7;
+        param.Add("weapon", weapon);
 
         BackendAsyncClass.BackendAsync(Backend.GameInfo.Update, "character", dataIndate, param, (callback) =>
         {
