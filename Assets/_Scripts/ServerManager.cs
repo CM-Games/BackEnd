@@ -552,7 +552,7 @@ public class ServerManager : MonoBehaviour
             print($"Gun : LV.{gunLevel}    Knife : LV.{knifeLevel}    Punch : LV.{punchLevel}");
             print("동기 방식 정보 읽기 완료");
         }
-        else Error(BRO.GetErrorCode(), "ReadData");
+        else Error(BRO.GetErrorCode(), "gameData");
     }
     
     // 비동기 방식 정보 읽기
@@ -575,7 +575,7 @@ public class ServerManager : MonoBehaviour
                 print($"Gun : LV.{gunLevel}    Knife : LV.{knifeLevel}    Punch : LV.{punchLevel}");
                 print("비동기 방식 정보 읽기 완료");
             }
-            else Error(callback.GetErrorCode(), "ReadData");
+            else Error(callback.GetErrorCode(), "gameData");
         });
     }
 
@@ -590,7 +590,7 @@ public class ServerManager : MonoBehaviour
 
         BackendReturnObject BRO = Backend.GameInfo.Update("character", dataIndate, param);
 
-        if (BRO.IsSuccess()) print("정보 수정 성공");
+        if (BRO.IsSuccess()) print("동기 방식 정보 수정 성공");
         else print(BRO.GetErrorCode());
     }
 
@@ -605,8 +605,27 @@ public class ServerManager : MonoBehaviour
 
         BackendAsyncClass.BackendAsync(Backend.GameInfo.Update, "character", dataIndate, param, (callback) =>
         {
-            if (callback.IsSuccess()) print("정보 수정 성공");
+            if (callback.IsSuccess()) print("비동기 방식 정보 수정 성공");
             else print(callback.GetErrorCode());
+        });
+    }
+
+    // 동기 방식 정보 삭제
+    public void deleteData()
+    {
+        BackendReturnObject BRO = Backend.GameInfo.Delete("character", dataIndate);
+
+        if (BRO.IsSuccess()) print("동기 방식 정보 삭제 성공");
+        else Error(BRO.GetErrorCode(), "gameData");
+    }
+
+    // 비동기 방식 정보 삭제
+    public void deleteDataAsync()
+    {
+        BackendAsyncClass.BackendAsync(Backend.GameInfo.Delete, "character", dataIndate, (callback) =>
+        {
+            if (callback.IsSuccess()) print("비동기 방식 정보 삭제 성공");
+            else Error(callback.GetErrorCode(), "gameData");
         });
     }
     #endregion // 스키마 미정의
@@ -634,14 +653,13 @@ public class ServerManager : MonoBehaviour
         {
             if (type == "UserNickname") print("닉네임 앞/뒤 공백이 있거나 20자 이상입니다.");
             else if (type == "UserPW") print("잘못된 이메일입니다.");
-            else if (type == "ReadData") print("잘못된 유형의 테이블 입니다.");
+            else if (type == "gameData") print("잘못된 유형의 테이블 입니다.");
         }
         else if (errorCode == "NotFoundException")
         {
             if (type == "UserPW") print("등록된 이메일이 없습니다.");
             else if (type == "Coupon") print("중복 사용이거나 기간이 만료된 쿠폰입니다.");
             else if (type == "gameData") print("해당 테이블을 찾을 수 없습니다.");
-            else if (type == "ReadData") print("존재하지 않는 테이블 입니다");
         }
         else if (errorCode == "Too Many Request")
         {
@@ -649,11 +667,15 @@ public class ServerManager : MonoBehaviour
         }
         else if (errorCode == "PreconditionFailed")
         {
-            if (type == "gameData" || type == "ReadData") print("해당 테이블은 비활성화 된 테이블 입니다.");
+            if (type == "gameData") print("해당 테이블은 비활성화 된 테이블 입니다.");
         }
         else if (errorCode == "ServerErrorException")
         {
             if (type == "gameData") print("하나의 row이 400KB를 넘습니다");
+        }
+        else if(errorCode == "ForbiddenError")
+        {
+            if (type == "gameData") print("타인의 정보는 삭제가 불가능합니다.");
         }
     }
     #endregion
