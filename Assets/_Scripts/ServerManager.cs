@@ -28,6 +28,9 @@ public class ServerManager : MonoBehaviour
     public InputField coupon;
     string linkURL;
 
+    [Header("Social")]
+    public InputField GamerNickname;
+
     Dictionary<string, int> weapon = new Dictionary<string, int>
 {
     { "gun", 1 },
@@ -475,14 +478,6 @@ public class ServerManager : MonoBehaviour
         else print("이미지가 없습니다.");
     }
 
-    // 팝업창 닫기
-    public void exitNotice(int type)
-    {
-        if (type == 0) tempNotice.gameObject.SetActive(false);
-        else if (type == 1) Notice.gameObject.SetActive(false);
-        else if (type == 2) Event.gameObject.SetActive(false);
-    }
-
     // 연결 링크가 있다면 링크 오픈
     public void openUrl()
     {
@@ -498,7 +493,6 @@ public class ServerManager : MonoBehaviour
     #endregion // 운영관리
 
     #region 정보 관리
-    #region 스키마 미정의
     // 동기 방식 정보 삽입
     public void insertData()
     {
@@ -628,8 +622,40 @@ public class ServerManager : MonoBehaviour
             else Error(callback.GetErrorCode(), "gameData");
         });
     }
-    #endregion // 스키마 미정의
     #endregion // 정보 관리
+
+    #region 소셜 기능
+    // 동기 방식 유저 찾기
+    public void getGammerIndate()
+    {
+        BackendReturnObject BRO = Backend.Social.GetGamerIndateByNickname(GamerNickname.text);
+
+        if (BRO.IsSuccess())
+        {
+            JsonData GamerIndate = BRO.GetReturnValuetoJSON()["rows"][0];
+
+            string indate = GamerIndate["inDate"][0].ToString();
+
+            print($"[동기] {GamerNickname.text} 님의 inDate : {indate}");
+        }
+    }
+
+    // 비동기 방식 유저 찾기
+    public void getGammerIndateAsync()
+    {
+        BackendAsyncClass.BackendAsync(Backend.Social.GetGamerIndateByNickname, GamerNickname.text, (callback) =>
+        {
+            if (callback.IsSuccess())
+            {
+                JsonData GamerIndate = callback.GetReturnValuetoJSON()["rows"][0];
+
+                string indate = GamerIndate["inDate"][0].ToString();
+
+                print($"[비동기] {GamerNickname.text} 님의 inDate : {indate}");
+            }
+        });
+    }
+    #endregion
 
 
     #region 예외처리
