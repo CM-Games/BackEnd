@@ -32,7 +32,8 @@ public class ServerManager : MonoBehaviour
     [Header("Social")]
     public InputField GamerNickname;
     public InputField FriendNickname;
-    public Transform RequestFriendList;
+    public Transform ReceivedFriendList;
+    public Transform FriendList;
     string indate = null;
 
     Dictionary<string, int> weapon = new Dictionary<string, int>
@@ -647,7 +648,7 @@ public class ServerManager : MonoBehaviour
     // 동기 방식 유저찾기 오버로드
     // 친구 요청을 할때 inDate 값이 필요하기 때문
     string getGammerIndate(string nickname)
-    {     
+    {
         BackendReturnObject BRO = Backend.Social.GetGamerIndateByNickname(nickname);
 
         if (BRO.IsSuccess())
@@ -685,21 +686,24 @@ public class ServerManager : MonoBehaviour
 
         if (BRO.IsSuccess())
         {
-            JsonData jsonData = BRO.GetReturnValuetoJSON()["rows"][0];
+            JsonData jsonData = BRO.GetReturnValuetoJSON()["rows"];
 
-            string nickname = jsonData["nickname"][0].ToString();
-            string inDate = jsonData["inDate"][0].ToString();
-
-           
-
-            for (int i = 0; i < RequestFriendList.childCount; i++)
+            for (int i = 0; i < jsonData.Count; i++)
             {
-                if (!RequestFriendList.GetChild(i).gameObject.activeSelf)
+                JsonData Data = jsonData[i];
+
+                string nickname = Data["nickname"][0].ToString();
+                string inDate = Data["inDate"][0].ToString();
+
+                for (int j = 0; j < ReceivedFriendList.childCount; j++)
                 {
-                    RequestFriendList.GetChild(i).GetChild(1).GetComponent<Text>().text = nickname;
-                    RequestFriendList.GetChild(i).GetChild(2).GetComponent<Text>().text = inDate;
-                    RequestFriendList.GetChild(i).gameObject.SetActive(true);
-                    break;
+                    if (!ReceivedFriendList.GetChild(j).gameObject.activeSelf)
+                    {
+                        ReceivedFriendList.GetChild(j).GetChild(1).GetComponent<Text>().text = nickname;
+                        ReceivedFriendList.GetChild(j).GetChild(2).GetComponent<Text>().text = inDate;
+                        ReceivedFriendList.GetChild(j).gameObject.SetActive(true);
+                        break;
+                    }
                 }
             }
             print("동기 방식 친구 요청 리스트 조회 성공");
@@ -709,27 +713,28 @@ public class ServerManager : MonoBehaviour
     // 비동기 방식 친구 요청 리스트 조회
     public void getReceivedFriendListAsync()
     {
-       
         Backend.Social.Friend.GetReceivedRequestList((callback) =>
         {
             if (callback.IsSuccess())
             {
-                JsonData jsonData = callback.GetReturnValuetoJSON()["rows"][0];
+                JsonData jsonData = callback.GetReturnValuetoJSON()["rows"];
 
-                string nickname = jsonData["nickname"][0].ToString();
-                string inDate = jsonData["inDate"][0].ToString();
-
-                print(RequestFriendList.GetChild(0).gameObject.activeSelf);
-
-                for (int i = 0; i < 3; i++)
+                for (int i = 0; i < jsonData.Count; i++)
                 {
-                    print("1");
-                    if (!RequestFriendList.GetChild(i).gameObject.activeSelf)
+                    JsonData Data = jsonData[i];
+
+                    string nickname = Data["nickname"][0].ToString();
+                    string inDate = Data["inDate"][0].ToString();
+
+                    for (int j = 0; j < ReceivedFriendList.childCount; j++)
                     {
-                        RequestFriendList.GetChild(i).GetChild(1).GetComponent<Text>().text = nickname;
-                        RequestFriendList.GetChild(i).GetChild(2).GetComponent<Text>().text = inDate;
-                        RequestFriendList.GetChild(i).gameObject.SetActive(true);
-                        break;
+                        if (!ReceivedFriendList.GetChild(j).gameObject.activeSelf)
+                        {
+                            ReceivedFriendList.GetChild(j).GetChild(1).GetComponent<Text>().text = nickname;
+                            ReceivedFriendList.GetChild(j).GetChild(2).GetComponent<Text>().text = inDate;
+                            ReceivedFriendList.GetChild(j).gameObject.SetActive(true);
+                            break;
+                        }
                     }
                 }
 
@@ -740,17 +745,53 @@ public class ServerManager : MonoBehaviour
         });
     }
 
+    // 동기 방식 친구 리스트 조회
+    public void getFriendList()
+    {
+       BackendReturnObject BRO = Backend.Social.Friend.GetFriendList();
+
+        if (BRO.IsSuccess())
+        {
+            JsonData jsonData = BRO.GetReturnValuetoJSON()["rows"];
+
+            for (int i = 0; i < jsonData.Count; i++)
+            {
+                JsonData Data = jsonData[i];
+
+                string nickname = Data["nickname"][0].ToString();
+                string indate = Data["inDate"][0].ToString();
+                
+                for (int j = 0; j < FriendList.childCount; j++)
+                {
+                    if (!FriendList.GetChild(j).gameObject.activeSelf)
+                    {
+                        FriendList.GetChild(j).GetChild(1).GetComponent<Text>().text = nickname;
+                        FriendList.GetChild(j).GetChild(2).GetComponent<Text>().text = indate;
+                        FriendList.GetChild(j).gameObject.SetActive(true);
+                        break;
+                    }
+                }
+            }
+
+            print("동기 방식 친구 리스트 조회 성공");
+        }
+    }
+
+    // 비동기 방식 친구 리스트 조회
+    public void getFriendListAsync()
+    {
+
+    }
+
     // 동기 방식 친구 요청
     public void requestFriend()
     {
         BackendReturnObject BRO = Backend.Social.Friend.RequestFriend(getGammerIndate(FriendNickname.text));
-        
-        if (BRO.IsSuccess())
-        {
-            print($"동기 방식 {FriendNickname.text}님에게 친구요청 성공");
-            FriendNickname.text = "";
-        }
+    
+        if (BRO.IsSuccess()) print($"동기 방식 {FriendNickname.text}님에게 친구요청 성공");
         else Error(BRO.GetErrorCode(), "Friend");
+
+        FriendNickname.text = "";
     }
 
     // 비동기 방식 친구 요청
@@ -758,29 +799,101 @@ public class ServerManager : MonoBehaviour
     {
         BackendAsyncClass.BackendAsync(Backend.Social.Friend.RequestFriend, getGammerIndate(FriendNickname.text), (callback) =>
         {
-            if (callback.IsSuccess())
-            {
-                print($"비동기 방식 {FriendNickname.text}님에게 친구요청 성공");
-                FriendNickname.text = "";
-            }
+            if (callback.IsSuccess()) print($"비동기 방식 {FriendNickname.text}님에게 친구요청 성공");
             else Error(callback.GetErrorCode(), "Friend");
+
+            FriendNickname.text = "";
         });
     }
 
     // 동기 방식 친구 수락
     public void AcceptFriend()
     {
-        string nickname = EventSystem.current.currentSelectedGameObject.transform.parent.GetChild(1).GetComponent<Text>().text;
-        BackendReturnObject BRO = Backend.Social.Friend.AcceptFriend("gamerIndate");
+        string inDate = EventSystem.current.currentSelectedGameObject.transform.parent.GetChild(2).GetComponent<Text>().text;
 
+        BackendReturnObject BRO = Backend.Social.Friend.AcceptFriend(inDate);
+
+        if (BRO.IsSuccess())
+        {
+            EventSystem.current.currentSelectedGameObject.transform.parent.gameObject.SetActive(false);
+            print("동기 방식 친구 수락 완료");
+        }      
+        else Error(BRO.GetErrorCode(), "Friend");
     }
 
     // 비동기 방식 친구 수락
     public void AcceptFriendAsync()
     {
+        string inDate = EventSystem.current.currentSelectedGameObject.transform.parent.GetChild(2).GetComponent<Text>().text;
 
+        BackendAsyncClass.BackendAsync(Backend.Social.Friend.AcceptFriend, inDate, (callback) =>
+        {
+            if (callback.IsSuccess())
+            {
+                EventSystem.current.currentSelectedGameObject.transform.parent.gameObject.SetActive(false);
+                print("비동기 방식 친구 수락 완료");
+            }
+            else Error(callback.GetErrorCode(), "Friend");
+        });
     }
 
+    // 동기 방식 친구 거절
+    public void RejectFriend()
+    {
+        string inDate = EventSystem.current.currentSelectedGameObject.transform.parent.GetChild(2).GetComponent<Text>().text;
+
+        BackendReturnObject BRO = Backend.Social.Friend.RejectFriend(inDate);
+
+        if (BRO.IsSuccess())
+        {
+            EventSystem.current.currentSelectedGameObject.transform.parent.gameObject.SetActive(false);
+            print("동기 방식 친구 거절 완료");
+        }
+    }
+
+    // 비동기 방식 친구 거절
+    public void RejectFriendAsync()
+    {
+        string inDate = EventSystem.current.currentSelectedGameObject.transform.parent.GetChild(2).GetComponent<Text>().text;
+
+        BackendAsyncClass.BackendAsync(Backend.Social.Friend.RejectFriend, inDate, (callback) =>
+        {
+            if (callback.IsSuccess())
+            {
+                EventSystem.current.currentSelectedGameObject.transform.parent.gameObject.SetActive(false);
+                print("비동기 방식 친구 거절 완료");
+            }
+        });
+    }
+
+    // 동기 방식 친구 삭제
+    public void BreakFriend()
+    {
+        string inDate = EventSystem.current.currentSelectedGameObject.transform.parent.GetChild(2).GetComponent<Text>().text;
+
+        BackendReturnObject BRO = Backend.Social.Friend.BreakFriend(inDate);
+
+        if (BRO.IsSuccess())
+        {
+            EventSystem.current.currentSelectedGameObject.transform.parent.gameObject.SetActive(false);
+            print("동기 방식 친구 삭제 완료");
+        }
+    }
+
+    // 비동기 방식 친구 삭제
+    public void BreakFriendAsync()
+    {
+        string inDate = EventSystem.current.currentSelectedGameObject.transform.parent.GetChild(2).GetComponent<Text>().text;
+
+        BackendAsyncClass.BackendAsync(Backend.Social.Friend.BreakFriend, inDate, (callback) =>
+        {
+            if (callback.IsSuccess())
+            {
+                EventSystem.current.currentSelectedGameObject.transform.parent.gameObject.SetActive(false);
+                print("비동기 방식 친구 삭제 완료");
+            }
+        });
+    }
     #endregion
 
 
