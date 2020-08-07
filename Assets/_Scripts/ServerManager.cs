@@ -34,7 +34,12 @@ public class ServerManager : MonoBehaviour
     public InputField FriendNickname;
     public Transform ReceivedFriendList;
     public Transform FriendList;
+    public InputField messageNickname;
+    public InputField messageContents;
+    public Transform messageReceivedList;
+    public Transform messageSendList;
     string indate = null;
+    
 
     Dictionary<string, int> weapon = new Dictionary<string, int>
 {
@@ -630,6 +635,9 @@ public class ServerManager : MonoBehaviour
     #endregion // 정보 관리
 
     #region 소셜 기능
+
+    #region 유저 찾기
+   
     // 동기 방식 유저 찾기
     public void getGammerIndate()
     {
@@ -677,7 +685,9 @@ public class ServerManager : MonoBehaviour
             }
         });
     }
+    #endregion // 유저 찾기
 
+    #region 친구기능
     // 동기 방식 친구 요청 리스트 조회
     public void getReceivedFriendList()
     {
@@ -712,26 +722,33 @@ public class ServerManager : MonoBehaviour
     // 비동기 방식 친구 요청 리스트 조회
     public void getReceivedFriendListAsync()
     {
-        Backend.Social.Friend.GetReceivedRequestList((callback) =>
-        {
-            if (callback.IsSuccess())
-            {
-                JsonData jsonData = callback.GetReturnValuetoJSON()["rows"];
+        BackendAsyncClass.BackendAsync(Backend.Social.Friend.GetReceivedRequestList, BRO =>
+       {
+           if (BRO.IsSuccess())
+           {
+               JsonData jsonData = BRO.GetReturnValuetoJSON()["rows"];
 
-                for (int i = 0; i < jsonData.Count; i++)
-                {
-                    JsonData Data = jsonData[i];
+               for (int i = 0; i < jsonData.Count; i++)
+               {
+                   JsonData Data = jsonData[i];
 
-                    string nickname = Data["nickname"][0].ToString();
-                    string inDate = Data["inDate"][0].ToString();
+                   string nickname = Data["nickname"][0].ToString();
+                   string inDate = Data["inDate"][0].ToString();
 
-                    // 이후 처리
-                }
-                print("비동기 방식 친구 요청 리스트 조회 성공");
-            }
-            else print(callback.GetErrorCode());
-
-        });
+                   for (int j = 0; j < ReceivedFriendList.childCount; j++)
+                   {
+                       if (!ReceivedFriendList.GetChild(j).gameObject.activeSelf)
+                       {
+                           ReceivedFriendList.GetChild(j).GetChild(1).GetComponent<Text>().text = nickname;
+                           ReceivedFriendList.GetChild(j).GetChild(2).GetComponent<Text>().text = inDate;
+                           ReceivedFriendList.GetChild(j).gameObject.SetActive(true);
+                           break;
+                       }
+                   }
+               }
+               print("비동기 방식 친구 요청 리스트 조회 성공");
+           }
+       });
     }
 
     // 동기 방식 친구 리스트 조회
@@ -761,7 +778,6 @@ public class ServerManager : MonoBehaviour
                     }
                 }
             }
-
             print("동기 방식 친구 리스트 조회 성공");
         }
     }
@@ -782,7 +798,16 @@ public class ServerManager : MonoBehaviour
                     string nickname = Data["nickname"][0].ToString();
                     string indate = Data["inDate"][0].ToString();
 
-                    // 이후처리
+                    for (int j = 0; j < FriendList.childCount; j++)
+                    {
+                        if (!FriendList.GetChild(j).gameObject.activeSelf)
+                        {
+                            FriendList.GetChild(j).GetChild(1).GetComponent<Text>().text = nickname;
+                            FriendList.GetChild(j).GetChild(2).GetComponent<Text>().text = indate;
+                            FriendList.GetChild(j).gameObject.SetActive(true);
+                            break;
+                        }
+                    }
                 }
                 print("비동기 방식 친구 리스트 조회 성공");
             }
@@ -900,7 +925,100 @@ public class ServerManager : MonoBehaviour
             }
         });
     }
-    #endregion
+    #endregion // 친구 기능
+
+    #region 쪽지 기능
+    // 동기 방식 쪽지 보내기
+    public void sendMessage()
+    {
+        BackendReturnObject BRO = Backend.Social.Message.SendMessage(getGammerIndate(messageNickname.text), messageContents.text);
+
+        if (BRO.IsSuccess())
+        {
+            print($"{messageNickname.text}님께 동기 방식 쪽지 보내기 성공");
+            messageNickname.text = "";
+            messageContents.text = "";
+        }
+        else Error(BRO.GetErrorCode(), "Message");
+    }
+
+    // 비동기 방식 쪽지 보내기
+    public void sendMessageAsync()
+    {
+        BackendAsyncClass.BackendAsync(Backend.Social.Message.SendMessage, getGammerIndate(messageNickname.text), messageContents.text, (callback) =>
+        {
+            if (callback.IsSuccess())
+            {
+                print($"{messageNickname.text}님께 동기 방식 쪽지 보내기 성공");
+                messageNickname.text = "";
+                messageContents.text = "";
+            }
+            else Error(callback.GetErrorCode(), "Message");
+        });
+    }
+
+    // 동기 방식 받은 쪽지 리스트 조회
+    public void getReceivedMessage()
+    {
+        BackendReturnObject BRO = Backend.Social.Message.GetReceivedMessageList();
+
+        if (BRO.IsSuccess())
+        {
+            JsonData jsonData = BRO.GetReturnValuetoJSON()["rows"];
+
+            for (int i = 0; i < jsonData.Count; i++)
+            {
+                JsonData Data = jsonData[i];
+
+                string nickname = Data["senderNickname"][0].ToString();
+                string inDate = Data["inDate"][0].ToString();
+
+                for (int j = 0; j < messageReceivedList.childCount ; j++)
+                {
+                    if (!messageReceivedList.GetChild(j).gameObject.activeSelf)
+                    {
+                        messageReceivedList.GetChild(j).GetChild(1).GetComponent<Text>().text = nickname + "\n님이 보냄";
+                        messageReceivedList.GetChild(j).GetChild(2).GetComponent<Text>().text = indate;
+                        messageReceivedList.GetChild(j).gameObject.SetActive(true);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    // 비동기 방식 받은 쪽지 리스트 조회
+    public void getReceivedMessageAsync()
+    {
+        BackendAsyncClass.BackendAsync(Backend.Social.Message.GetReceivedMessageList, (callback) =>
+        {
+            if (callback.IsSuccess())
+            {
+                JsonData jsonData = callback.GetReturnValuetoJSON()["rows"];
+
+                for (int i = 0; i < jsonData.Count; i++)
+                {
+                    JsonData Data = jsonData[i];
+
+                    string nickname = Data["senderNickname"][0].ToString();
+                    string inDate = Data["inDate"][0].ToString();
+
+                    for (int j = 0; j < messageReceivedList.childCount; j++)
+                    {
+                        if (!messageReceivedList.GetChild(j).gameObject.activeSelf)
+                        {
+                            messageReceivedList.GetChild(j).GetChild(1).GetComponent<Text>().text = nickname + "\n님이 보냄";
+                            messageReceivedList.GetChild(j).GetChild(2).GetComponent<Text>().text = indate;
+                            messageReceivedList.GetChild(j).gameObject.SetActive(true);
+                            break;
+                        }
+                    }
+                }
+            }
+        });
+    }
+    #endregion // 쪽지 기능
+    #endregion // 소셜 기능
 
 
     #region 예외처리
@@ -916,6 +1034,7 @@ public class ServerManager : MonoBehaviour
         else if (errorCode == "BadUnauthorizedException")
         {
             if (type == "UserFunc") print("잘못된 사용자 아이디 혹은 비밀번호 입니다.");
+            else if (type == "Message") print("잘못된 닉네임입니다.");
         }
         else if (errorCode == "UndefinedParameterException")
         {
@@ -926,6 +1045,7 @@ public class ServerManager : MonoBehaviour
             if (type == "UserNickname") print("닉네임 앞/뒤 공백이 있거나 20자 이상입니다.");
             else if (type == "UserPW") print("잘못된 이메일입니다.");
             else if (type == "gameData") print("잘못된 유형의 테이블 입니다.");
+            else if (type == "Message") print("보내는 사람, 받는 사람이 같습니다.");
         }
         else if (errorCode == "NotFoundException")
         {
@@ -941,6 +1061,7 @@ public class ServerManager : MonoBehaviour
         {
             if (type == "gameData") print("해당 테이블은 비활성화 된 테이블 입니다.");
             else if (type == "Friend") print("받는 사람 혹은 보내는 사람의 요청갯수가 꽉 찬 상태입니다.");
+            else if (type == "Message") print("설정한 글자수를 초과하였습니다.");
         }
         else if (errorCode == "ServerErrorException")
         {
@@ -949,6 +1070,11 @@ public class ServerManager : MonoBehaviour
         else if (errorCode == "ForbiddenError")
         {
             if (type == "gameData") print("타인의 정보는 삭제가 불가능합니다.");
+            else if (type == "Message") print("콘솔에서 쪽지 최대보유수를 설정해주세요");
+        }
+        else if(errorCode == "MethodNotAllowedParameterException")
+        {
+            if (type == "Message") print("상대방의 쪽지가 가득 찾습니다.");
         }
     }
     #endregion

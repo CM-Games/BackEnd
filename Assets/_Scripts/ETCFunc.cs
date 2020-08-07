@@ -7,6 +7,7 @@ public class ETCFunc : MonoBehaviour
 {
     public Transform LoadingObj;
     public GameObject FriendUI;
+    public GameObject MessageUI;
 
     void Update()
     {
@@ -20,5 +21,6 @@ public class ETCFunc : MonoBehaviour
     public void openUI(string type)
     {
         if (type == "Friend") FriendUI.SetActive(true);
+        else if (type == "Message") MessageUI.SetActive(true);
     }
 }
