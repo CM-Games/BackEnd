@@ -38,8 +38,9 @@ public class ServerManager : MonoBehaviour
     public InputField messageContents;
     public Transform messageReceivedList;
     public Transform messageSendList;
+    public Transform messageInfoObj;
     string indate = null;
-    
+
 
     Dictionary<string, int> weapon = new Dictionary<string, int>
 {
@@ -637,7 +638,7 @@ public class ServerManager : MonoBehaviour
     #region 소셜 기능
 
     #region 유저 찾기
-   
+
     // 동기 방식 유저 찾기
     public void getGammerIndate()
     {
@@ -949,7 +950,7 @@ public class ServerManager : MonoBehaviour
         {
             if (callback.IsSuccess())
             {
-                print($"{messageNickname.text}님께 동기 방식 쪽지 보내기 성공");
+                print($"{messageNickname.text}님께 비동기 방식 쪽지 보내기 성공");
                 messageNickname.text = "";
                 messageContents.text = "";
             }
@@ -973,12 +974,12 @@ public class ServerManager : MonoBehaviour
                 string nickname = Data["senderNickname"][0].ToString();
                 string inDate = Data["inDate"][0].ToString();
 
-                for (int j = 0; j < messageReceivedList.childCount ; j++)
+                for (int j = 0; j < messageReceivedList.childCount; j++)
                 {
                     if (!messageReceivedList.GetChild(j).gameObject.activeSelf)
                     {
                         messageReceivedList.GetChild(j).GetChild(1).GetComponent<Text>().text = nickname + "\n님이 보냄";
-                        messageReceivedList.GetChild(j).GetChild(2).GetComponent<Text>().text = indate;
+                        messageReceivedList.GetChild(j).GetChild(2).GetComponent<Text>().text = inDate;
                         messageReceivedList.GetChild(j).gameObject.SetActive(true);
                         break;
                     }
@@ -1008,12 +1009,178 @@ public class ServerManager : MonoBehaviour
                         if (!messageReceivedList.GetChild(j).gameObject.activeSelf)
                         {
                             messageReceivedList.GetChild(j).GetChild(1).GetComponent<Text>().text = nickname + "\n님이 보냄";
-                            messageReceivedList.GetChild(j).GetChild(2).GetComponent<Text>().text = indate;
+                            messageReceivedList.GetChild(j).GetChild(2).GetComponent<Text>().text = inDate;
                             messageReceivedList.GetChild(j).gameObject.SetActive(true);
                             break;
                         }
                     }
                 }
+            }
+        });
+    }
+
+    // 동기 방식 보낸 쪽지 리스트 조회
+    public void getSendMessage()
+    {
+        BackendReturnObject BRO = Backend.Social.Message.GetSentMessageList();
+
+        if (BRO.IsSuccess())
+        {
+            JsonData jsonData = BRO.GetReturnValuetoJSON()["rows"];
+
+            for (int i = 0; i < jsonData.Count; i++)
+            {
+                JsonData Data = jsonData[i];
+
+                string nickname = Data["receiverNickname"][0].ToString();
+                string inDate = Data["inDate"][0].ToString();
+
+                for (int j = 0; j < messageSendList.childCount; j++)
+                {
+                    if (!messageReceivedList.GetChild(j).gameObject.activeSelf)
+                    {
+                        messageSendList.GetChild(j).GetChild(1).GetComponent<Text>().text = nickname + "\n님께 보냄";
+                        messageSendList.GetChild(j).GetChild(2).GetComponent<Text>().text = inDate;
+                        messageSendList.GetChild(j).gameObject.SetActive(true);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    // 비동기 방식 보낸 쪽지 리스트 조회
+    public void getSendMessageAsync()
+    {
+        BackendAsyncClass.BackendAsync(Backend.Social.Message.GetSentMessageList, (callback) =>
+        {
+            if (callback.IsSuccess())
+            {
+                JsonData jsonData = callback.GetReturnValuetoJSON()["rows"];
+
+                for (int i = 0; i < jsonData.Count; i++)
+                {
+                    JsonData Data = jsonData[i];
+
+                    string nickname = Data["receiverNickname"][0].ToString();
+                    string inDate = Data["inDate"][0].ToString();
+
+                    for (int j = 0; j < messageSendList.childCount; j++)
+                    {
+                        if (!messageReceivedList.GetChild(j).gameObject.activeSelf)
+                        {
+                            messageSendList.GetChild(j).GetChild(1).GetComponent<Text>().text = nickname + "\n님께 보냄";
+                            messageSendList.GetChild(j).GetChild(2).GetComponent<Text>().text = inDate;
+                            messageSendList.GetChild(j).gameObject.SetActive(true);
+                            break;
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // 동기 방식 받은 쪽지 읽기
+    public void readMessage()
+    {
+        string inDate = EventSystem.current.currentSelectedGameObject.transform.parent.GetChild(2).GetComponent<Text>().text;
+
+        BackendReturnObject BRO = Backend.Social.Message.GetReceivedMessage(inDate);
+
+        if (BRO.IsSuccess())
+        {
+            JsonData jsonData = BRO.GetReturnValuetoJSON()["row"];
+
+            string nickname = jsonData["senderNickname"][0].ToString();
+            string content = jsonData["content"][0].ToString();
+
+            messageInfoObj.GetChild(2).GetComponent<Text>().text = $"{nickname} 님이 보냄";
+            messageInfoObj.GetChild(3).GetComponent<Text>().text = content;
+
+            messageInfoObj.gameObject.SetActive(true);
+
+            print("동기 방식 쪽지 읽기 완료");
+        }
+    }
+
+    // 비동기 방식 받은 쪽지 읽기
+    public void readMessageAsync()
+    {
+        string inDate = EventSystem.current.currentSelectedGameObject.transform.parent.GetChild(2).GetComponent<Text>().text;
+
+        BackendAsyncClass.BackendAsync(Backend.Social.Message.GetReceivedMessage, inDate, (callback) =>
+        {
+            if (callback.IsSuccess())
+            {
+                JsonData jsonData = callback.GetReturnValuetoJSON()["row"];
+
+                string nickname = jsonData["senderNickname"][0].ToString();
+                string content = jsonData["content"][0].ToString();
+
+                messageInfoObj.GetChild(2).GetComponent<Text>().text = $"{nickname} 님이 보냄";
+                messageInfoObj.GetChild(3).GetComponent<Text>().text = content;
+
+                messageInfoObj.gameObject.SetActive(true);
+
+                print("비동기 방식 쪽지 읽기 완료");
+            }
+        });
+    }
+
+    // 동기 방식 받은 쪽지 삭제
+    public void deleteMessage()
+    {
+        string inDate = EventSystem.current.currentSelectedGameObject.transform.parent.GetChild(2).GetComponent<Text>().text;
+
+        BackendReturnObject BRO = Backend.Social.Message.DeleteReceivedMessage(inDate);
+
+        if (BRO.IsSuccess())
+        {
+            EventSystem.current.currentSelectedGameObject.transform.parent.gameObject.SetActive(false);
+            print("동기 방식 삭제 완료");
+        }
+    }
+
+    // 비동기 방식 받은 쪽지 삭제
+    public void deleteMessageAsync()
+    {
+        string inDate = EventSystem.current.currentSelectedGameObject.transform.parent.GetChild(2).GetComponent<Text>().text;
+
+        BackendAsyncClass.BackendAsync(Backend.Social.Message.DeleteReceivedMessage, inDate, (callback) =>
+        {
+            if (callback.IsSuccess())
+            {
+                EventSystem.current.currentSelectedGameObject.transform.parent.gameObject.SetActive(false);
+                print("비동기 방식 삭제 완료");
+            }
+        });
+    }
+
+    // 동기 방식 보낸 쪽지 삭제
+    public void deleteSendMessage()
+    {
+        string inDate = EventSystem.current.currentSelectedGameObject.transform.parent.GetChild(2).GetComponent<Text>().text;
+
+        BackendReturnObject BRO = Backend.Social.Message.DeleteSentMessage(inDate);
+
+        if (BRO.IsSuccess())
+        {
+            EventSystem.current.currentSelectedGameObject.transform.parent.gameObject.SetActive(false);
+            print("동기 방식 보낸 쪽지 삭제 완료");
+        }
+    }
+
+    // 비동기 방식 보낸 쪽지 삭제
+    public void deleteSendMessageAsync()
+    {
+        string inDate = EventSystem.current.currentSelectedGameObject.transform.parent.GetChild(2).GetComponent<Text>().text;
+
+        BackendAsyncClass.BackendAsync(Backend.Social.Message.DeleteSentMessage, inDate, (callback) =>
+        {
+            if (callback.IsSuccess())
+            {
+                EventSystem.current.currentSelectedGameObject.transform.parent.gameObject.SetActive(false);
+                print("비동기 방식 보낸 쪽지 삭제 완료");
             }
         });
     }
@@ -1072,7 +1239,7 @@ public class ServerManager : MonoBehaviour
             if (type == "gameData") print("타인의 정보는 삭제가 불가능합니다.");
             else if (type == "Message") print("콘솔에서 쪽지 최대보유수를 설정해주세요");
         }
-        else if(errorCode == "MethodNotAllowedParameterException")
+        else if (errorCode == "MethodNotAllowedParameterException")
         {
             if (type == "Message") print("상대방의 쪽지가 가득 찾습니다.");
         }
