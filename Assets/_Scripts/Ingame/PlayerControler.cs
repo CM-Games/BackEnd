@@ -2,9 +2,14 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+
+
 public class PlayerControler : MonoBehaviour
 {
+    public static PlayerControler instance;
+
     public int moveSpeed;
+    public bool lockedMove;
 
     Animator _Am;
     Rigidbody2D _Rd;
@@ -14,25 +19,34 @@ public class PlayerControler : MonoBehaviour
 
     private void Start()
     {
+        instance = this;
+
+        lockedMove = true;
+
         _Am = transform.GetChild(0).GetComponent<Animator>();
         _Rd = GetComponent<Rigidbody2D>();
         _Sr = transform.GetChild(0).GetComponent<SpriteRenderer>();
+        
     }
 
     // Update is called once per frame
     void Update()
     {
-        inputX = Input.GetAxis("Horizontal");
-
-        _Rd.velocity = new Vector2(moveSpeed * inputX, _Rd.velocity.y);
-
-        if (inputX != 0)
+        if (!lockedMove)
         {
-            Flip(inputX);
-            _Am.SetBool("isRun", true);
+            inputX = Input.GetAxis("Horizontal");
+
+            _Rd.velocity = new Vector2(moveSpeed * inputX, _Rd.velocity.y);
+
+            if (inputX != 0)
+            {
+                Flip(inputX);
+                _Am.SetBool("isRun", true);
+            }
+            else _Am.SetBool("isRun", false);
         }
-        else _Am.SetBool("isRun", false);
     }
+
 
     void Flip(float axis)
     {
@@ -40,4 +54,6 @@ public class PlayerControler : MonoBehaviour
             _Sr.flipX = true;
         else _Sr.flipX = false;
     }
+
+
 }

@@ -5,7 +5,8 @@ using UnityEngine.SceneManagement;
 
 public class TitleManager : MonoBehaviour
 {
-    [Header("User Info")]
+    [Header("Login")]
+    public GameObject loginUI;
     public InputField ID;
     public InputField PW;
     public Button LoginBtn;
@@ -33,11 +34,15 @@ public class TitleManager : MonoBehaviour
         });
     }
 
-    public void Register()
+    public void SignUp()
     {
         BackendReturnObject BRO = Backend.BMember.CustomSignUp(ID.text, PW.text);
 
-        if (BRO.IsSuccess()) print("동기방식 회원가입 성공");
+        if (BRO.IsSuccess())
+        {
+            print("동기방식 회원가입 성공");
+            Login();
+        }
         else Error(BRO.GetErrorCode(), "UserFunc");
     }
 
@@ -53,8 +58,10 @@ public class TitleManager : MonoBehaviour
             print("동기방식 로그인 성공");
             SceneManager.LoadSceneAsync("Ingame");
         }
-        else Register();
+        else SignUp();
     }
+
+
 
     #region 예외처리
     // 에러 코드 확인
