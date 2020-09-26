@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+using UnityEngine.SceneManagement;
 
 
 public class PlayerControler : MonoBehaviour
@@ -32,6 +32,9 @@ public class PlayerControler : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if(lockedMove)
+        if (SceneManager.GetSceneByName("bbb").name.Equals("bbb")) lockedMove = false;
+
         if (!lockedMove)
         {
             inputX = Input.GetAxis("Horizontal");

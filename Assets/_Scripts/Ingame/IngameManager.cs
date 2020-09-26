@@ -20,17 +20,41 @@ public class IngameManager : MonoBehaviour
     public Text stateText;
     public Text playerNIckname;
 
+    void Test()
+    {
+        // 초기화
+        // [.net4][il2cpp] 사용 시 필수 사용
+        Backend.Initialize(() =>
+        {
+            // 초기화 성공한 경우 실행
+            if (Backend.IsInitialized)
+            {
+                print("뒤끝 초기화 성공");
+
+                // Test
+                Backend.BMember.CustomLogin("test", "test");
+
+            }
+            // 초기화 실패한 경우 실행
+            else
+            {
+                print("뒤끝 초기화 실패");
+            }
+        });
+    }
 
     private void Start()
     {
+        Test();
+
         Init();
     }
 
     void Init()
     {
         getUserInfo();
-
     }
+    
 
     // 동기 방식 유저 정보 가져오기
     public void getUserInfo()
